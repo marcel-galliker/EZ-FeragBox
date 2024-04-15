@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include <term.h>
+#include "box.h"
+#include "enc.h"
+#include "term.h"
 #include "utils.h"
 #include "main.h"
 
@@ -28,9 +30,11 @@ void term_process_input(void)
     if (_InputLen>1 && (_Input[_InputLen-1]=='\r' || _Input[_InputLen-1]=='\n'))
     {
     	char *args;
-    	if (strstart(_Input, "status")) 		  main_status();
-    	else if (args=strstart(_Input, "power")) main_power(args);
-    	else if (args=strstart(_Input, "encoder")) main_encoder(args);
+    	if (strstart(_Input, "status")) 		  		box_send_status();
+    	else if ((args=strstart(_Input, "power"))) 		main_power(args);
+    	else if ((args=strstart(_Input, "encoder"))) 	enc_command(args);
+    	else if ((args=strstart(_Input, "pg"))) 		box_printGo();
+
     	memset(_Input, 0, sizeof(_Input));
     	_InputLen=0;
     	printf(">> ");

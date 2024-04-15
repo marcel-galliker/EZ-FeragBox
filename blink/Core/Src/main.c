@@ -1,30 +1,27 @@
 /* USER CODE BEGIN Header */
 /**
- ******************************************************************************
- * @file           : main.c
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2024 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2024 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "enc.h"
-#include "term.h"
 #include "main.h"
 #include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "feragbox.h"
 
 #include "usbd_cdc_if.h"
 
@@ -62,8 +59,6 @@ UART_HandleTypeDef huart3;
 /* USER CODE BEGIN PV */
 volatile uint8_t RxData;
 
-S_FeragBoxStatus boxStatus;
-
 // USB CDC handle
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
@@ -81,14 +76,10 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 #define WRITE_PROTOTYPE int _write(int file, char *ptr, int len)
-float ADCValueToTemperature(uint16_t adcValue);
-uint8_t readDipSwitches(void);
-uint8_t convertVoltageToRevision(float revisionVoltage);
-void echoCommand(const char* args);
-void statusCommand(const char* args);
+
 void powerCommand(const char* args);
-void encoderCommand(const char* args);
-void printGoCommand(const char* args);
+
+static void _tick_10ms(int ticks);
 
 /* USER CODE END PFP */
 
@@ -103,9 +94,8 @@ void printGoCommand(const char* args);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
-	uint16_t adcValue = 0;
-	memset(&boxStatus, 0, sizeof(S_FeragBoxStatus));
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -139,63 +129,28 @@ int main(void)
   HAL_UART_Receive_IT(&huart3, &RxData, 1);
 
   term_init();
-
   enc_init();
-
-  /*
-  terminal_register_command("echo", "Echoes the input", echoCommand);
-  terminal_register_command("status", "Print System Status", statusCommand);
-  terminal_register_command("power", "Control NUC and Display Power", powerCommand);
-  terminal_register_command("encoder", "Control Encoder Status, Speed and Direction", encoderCommand);
-  terminal_register_command("printgo", "PrintGo on / off control", printGoCommand);
-*/
+  box_init();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	AD55936_init(&hi2c1, 0x10 << 1);
+	int _ticks=0;
 	while (1)
 	{
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		int ticks= HAL_GetTick();
+
+		while (ticks-_ticks>9)
+		{
+			_tick_10ms(ticks);
+			_ticks=ticks;
+		}
 		term_process_input();
-
-		// Update ADC Values
-		AD5593R_ReadADC(&hi2c1, 0x10 << 1, 0, &adcValue);
-		boxStatus.voltages.voltage24V = ((float)adcValue * 30.0) / 4095.0;
-		AD5593R_ReadADC(&hi2c1, 0x10 << 1, 1, &adcValue);
-		boxStatus.voltages.voltage12V = ((float)adcValue * 15.0) / 4095.0;
-		AD5593R_ReadADC(&hi2c1, 0x10 << 1, 2, &adcValue);
-		boxStatus.voltages.voltage12VNuc = ((float)adcValue * 15.0) / 4095.0;
-		AD5593R_ReadADC(&hi2c1, 0x10 << 1, 3, &adcValue);
-		boxStatus.voltages.voltage12VDisplay = ((float)adcValue * 15.0) / 4095.0;
-		AD5593R_ReadADC(&hi2c1, 0x10 << 1, 4, &adcValue);
-		boxStatus.voltages.voltage5V = ((float)adcValue * 6.25) / 4095.0;
-		AD5593R_ReadADC(&hi2c1, 0x10 << 1, 5, &adcValue);
-		boxStatus.voltages.voltage3V3 = ((float)adcValue * 4.125) / 4095.0;
-		AD5593R_ReadADC(&hi2c1, 0x10 << 1, 6, &adcValue);
-		boxStatus.voltages.voltagePcbRevision = ((float)adcValue * 4.125) / 4095.0;
-		boxStatus.pcbRevision = convertVoltageToRevision(boxStatus.voltages.voltagePcbRevision);
-
-		// Read ADC Internal Temperature Sensor
-		AD5593R_ReadADC(&hi2c1, 0x10 << 1, 8, &adcValue);
-		boxStatus.boardTemperature = ADCValueToTemperature(adcValue);
-
-		// Update DIP Switch inputs
-		boxStatus.dipSwitchStatus = readDipSwitches();
-
-		// Update PrintGo and PrintDone Status
-		boxStatus.printGoStatus = HAL_GPIO_ReadPin(PRINT_GO_GPIO_Port, PRINT_GO_Pin);
-		boxStatus.printDoneStatus = !HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin); // Signal is inverted
-
-		// Update encoder generator parameters
-		boxStatus.encoderSpeed = enc_get_speed();
-
-		// Update Power Status
-		boxStatus.nucPower = HAL_GPIO_ReadPin(NUC_PWR_EN_GPIO_Port, NUC_PWR_EN_Pin);
-		boxStatus.displayPower = HAL_GPIO_ReadPin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin);
 	}
   /* USER CODE END 3 */
 }
@@ -230,8 +185,8 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
@@ -585,94 +540,56 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	}
 }
 
+//--- _tick_10ms ---------------------
+static void _tick_10ms(int ticks)
+{
+	box_tick_10ms(ticks);
+	enc_tick_10ms(ticks);
+}
 
-float ADCValueToTemperature(uint16_t adcValue) {
+//--- adc_get_value --------------------------
+float adc_get_value(int no, float factor)
+{
+	uint16_t val;
+	AD5593R_ReadADC(&hi2c1, 0x10 << 1, no, &val);
+	return ((float)val * factor) / 4095.0;
+}
+
+//--- adc_get_temp --------------------------------------
+float adc_get_temp(void)
+{
     const float ADC_25 = 819.0; // ADC value at 25 degrees Celsius
     const float SLOPE = 2.654; // ADC counts per degree Celsius
-    float temperatureCelsius = 25.0 + ((float)adcValue - ADC_25) / SLOPE;
-    return temperatureCelsius;
+	uint16_t val;
+	AD5593R_ReadADC(&hi2c1, 0x10 << 1, 8, &val);
+    return 25.0 + ((float)val - ADC_25) / SLOPE;
 }
 
-
-uint8_t readDipSwitches(void) {
-    uint8_t dipStates = 0;
-
-    if (HAL_GPIO_ReadPin(DIP_0_GPIO_Port, DIP_0_Pin) == GPIO_PIN_SET) dipStates |= 1 << 0;
-    if (HAL_GPIO_ReadPin(DIP_1_GPIO_Port, DIP_1_Pin) == GPIO_PIN_SET) dipStates |= 1 << 1;
-    if (HAL_GPIO_ReadPin(DIP_2_GPIO_Port, DIP_2_Pin) == GPIO_PIN_SET) dipStates |= 1 << 2;
-    if (HAL_GPIO_ReadPin(DIP_3_GPIO_Port, DIP_3_Pin) == GPIO_PIN_SET) dipStates |= 1 << 3;
-    if (HAL_GPIO_ReadPin(DIP_4_GPIO_Port, DIP_4_Pin) == GPIO_PIN_SET) dipStates |= 1 << 4;
-    if (HAL_GPIO_ReadPin(DIP_5_GPIO_Port, DIP_5_Pin) == GPIO_PIN_SET) dipStates |= 1 << 5;
-
-    return dipStates;
-}
-
-
-uint8_t convertVoltageToRevision(float revisionVoltage) {
-    const float baseVoltage = 0.075f; // Base voltage (0.1V - 0.025V)
+//--- adc_get_revision ------------------------------------
+uint8_t adc_get_revision(float val)
+{
+	const float baseVoltage = 0.075f; // Base voltage (0.1V - 0.025V)
     const float increment = 0.1f; // Voltage increment per revision
     const float maxValidVoltage = 26.0f; // Example: max expected voltage, adjust based on your last revision
 
-    // Check if voltage is invalid (too low or too high)
-    if (revisionVoltage < baseVoltage || revisionVoltage > maxValidVoltage) {
-        return 0; // Invalid voltage
-    }
+    if (val < baseVoltage || val > maxValidVoltage) return 0; // Invalid voltage
 
-    // Calculate revision number, rounding down to nearest whole number
-    uint8_t revision = (uint8_t)floor((revisionVoltage - baseVoltage) / increment) + 1;
-
-    return revision;
+    return (uint8_t)floor((val - baseVoltage) / increment) + 1;
 }
 
-
-// Terminal Echo command
-void echoCommand(const char* args) {
-	printf("%s\n", args);
-}
-
-//--- main_status ----------------------------------------
-void main_status(void)
+//--- gpio_get_dipswitches -------------------------------
+uint8_t gpio_get_dipswitches(void)
 {
-	printf("NUC Power:           %s\n", boxStatus.nucPower ? "ON" : "OFF");
-	printf("Display Power:       %s\n", boxStatus.displayPower ? "ON" : "OFF");
-	printf("Print Go Status:     %s\n", boxStatus.printGoStatus ? "ON" : "OFF");
-	printf("Print Done Status:   %s\n", boxStatus.printDoneStatus ? "ON" : "OFF");
+    uint8_t dipswitches = 0;
 
-	// Printing dipSwitchStatus bit by bit
-	printf("DIP Switch Status: MSB --> ");
-	for (int i = 5; i >= 0; i--) {
-		printf("%d", (boxStatus.dipSwitchStatus >> i) & 1);
+    if (HAL_GPIO_ReadPin(DIP_0_GPIO_Port, DIP_0_Pin) == GPIO_PIN_SET) dipswitches |= 1 << 0;
+    if (HAL_GPIO_ReadPin(DIP_1_GPIO_Port, DIP_1_Pin) == GPIO_PIN_SET) dipswitches |= 1 << 1;
+    if (HAL_GPIO_ReadPin(DIP_2_GPIO_Port, DIP_2_Pin) == GPIO_PIN_SET) dipswitches |= 1 << 2;
+    if (HAL_GPIO_ReadPin(DIP_3_GPIO_Port, DIP_3_Pin) == GPIO_PIN_SET) dipswitches |= 1 << 3;
+    if (HAL_GPIO_ReadPin(DIP_4_GPIO_Port, DIP_4_Pin) == GPIO_PIN_SET) dipswitches |= 1 << 4;
+    if (HAL_GPIO_ReadPin(DIP_5_GPIO_Port, DIP_5_Pin) == GPIO_PIN_SET) dipswitches |= 1 << 5;
 
-		if(i == 4)
-			printf(" ");
-	}
-	printf(" <-- LSB \n");
-
-	// Encoder generator Settings
-	printf("Encoder Speed:        %d Hz\n", boxStatus.encoderSpeed);
-
-	// Encoder input status
-	printf("Encoder Position:     %u\n", (unsigned int)boxStatus.encoderPosition);
-
-	// Print Temperature
-	printf("Board Temperature:    %.2f °C\n", boxStatus.boardTemperature);
-
-	// Printing voltages
-	printf("3.3V Voltage:         %.2fV (3.3V)\n", boxStatus.voltages.voltage3V3);
-	printf("5V Voltage:           %.2fV (5V)\n",   boxStatus.voltages.voltage5V);
-	printf("12V Voltage:          %.2fV (12V)\n",  boxStatus.voltages.voltage12V);
-	printf("12V NUC Voltage:      %.2fV (12V)\n",  boxStatus.voltages.voltage12VNuc);
-	printf("12V Display Voltage:  %.2fV (12V)\n",  boxStatus.voltages.voltage12VDisplay);
-	printf("24V Voltage:          %.2fV (24V)\n",  boxStatus.voltages.voltage24V);
-	printf("PCB Revision Voltage: %.2fV\n",        boxStatus.voltages.voltagePcbRevision);
-
-	// PCB Revision
-	if (boxStatus.pcbRevision == 0) {
-		printf("PCB Revision: Invalid\n");
-	} else {
-		char pcbRev = 'A' + (boxStatus.pcbRevision * 10 - 1) / 10; // 0.1V increments starting at 'A'
-		printf("PCB Revision: %c\n", pcbRev);
-	}
+    return dipswitches;
 }
 
 //--- main_power -----------------------------------
@@ -711,44 +628,6 @@ void main_power(const char* args)
     } else {
         printf("Invalid device. Use 'nuc' or 'display'.\n");
     }
-}
-
-//--- main_encoder ---------------------------------------
-void main_encoder(const char* args)
-{
-	int speed;
-    int cnt=0;
-
-    // Parse the command arguments for action type
-    if (strstr(args, "start")) 		enc_start();
-    else if (strstr(args, "stop"))	enc_stop();
-    else if ((cnt=sscanf(args, "speed %d", &speed))) enc_set_speed(speed);
-    else
-    {
-        printf("Unknown command. Use 'encoder start', 'encoder stop', or 'encoder speed ...'\n");
-    }
-}
-
-//--- printGoCommand -------------------
-void printGoCommand(const char* args) {
-    char action[4];  // Buffer for the action ("on" or "off")
-
-    // Parse the command arguments
-    int parsedItems = sscanf(args, "%3s", action);
-    if (parsedItems != 1) {
-        printf("Invalid command. Use 'printgo on/off'\n");
-        return;
-    }
-
-	if (strcmp(action, "on") == 0) {
-		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_SET);
-		printf("PrintGo on\n");
-	} else if (strcmp(action, "off") == 0) {
-		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
-		printf("PrintGo off\n");
-	} else {
-		printf("Invalid action. Use 'on' or 'off'.\n");
-	}
 }
 
 

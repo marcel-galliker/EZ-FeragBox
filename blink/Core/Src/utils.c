@@ -13,7 +13,7 @@ char *strstart(const char *str, const char *start)
 	if (!strncmp(str, start, len))
 	{
 		while (str[len]==' ') len++;
-		return &str[len];
+		return (char*)&str[len];
 	}
 	return 0;
 }

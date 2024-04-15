@@ -36,17 +36,15 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
+extern TIM_HandleTypeDef htim2;
 /* USER CODE END EM */
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
@@ -55,9 +53,14 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-void main_status(void);
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
+float 	adc_get_value(int no, float factor);
+uint8_t adc_get_revision(float val);
+float 	adc_get_temp(void);
+uint8_t gpio_get_dipswitches(void);
+
 void main_power(const char *args);
-void main_encoder(const char* args);
 
 /* USER CODE END EFP */
 

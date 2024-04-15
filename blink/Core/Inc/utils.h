@@ -2,12 +2,19 @@
  * utils.h
  *
  *  Created on: Apr 12, 2024
- *      Author: marce_v533nrj
+ *      Author: marcel@galliker-engineering.ch
  */
 
 #ifndef INC_UTILS_H_
 #define INC_UTILS_H_
 
-int strstart(const char *str, const char *start);
+#include <stdio.h>
+#include <string.h>
+
+#define FALSE 0
+#define TRUE 1
+
+
+char *strstart(const char *str, const char *start);
 
 #endif /* INC_UTILS_H_ */

@@ -11,8 +11,11 @@
 
 #include "stm32f3xx_hal.h"
 
+void enc_command(const char *args);
+
 // Initializes the encoder engine.
 void enc_init(void);
+void enc_tick_10ms(int ticks);
 
 // Starts generating the encoder signal with the previously configured parameters.
 void enc_start(void);
@@ -27,5 +30,6 @@ void enc_set_speed(int32_t speed);
 
 // Get current speed
 int32_t enc_get_speed(void);
+int32_t enc_get_counter(void);
 
 #endif /* INC_ENCODER_ENGINE_H_ */
