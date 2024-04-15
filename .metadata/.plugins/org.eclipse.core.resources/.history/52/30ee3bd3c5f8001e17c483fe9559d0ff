@@ -1,0 +1,39 @@
+#include "terminal.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include "utils.h"
+#include "main.h"
+
+static char _Input[128];
+static int	_InputLen=0;
+
+//--- terminal_init --------------------------------
+void terminal_init(void)
+{
+	memset(_Input, 0, sizeof(_Input));
+    printf(">> ");
+}
+//--- terminal_addChar -------------------------
+void terminal_addChar(char ch)
+{
+	if (_InputLen<sizeof(_Input)) _Input[_InputLen++] = ch;
+	else _InputLen=0;
+	putchar(ch);
+}
+
+//--- terminal_process_input -------------------------------
+void terminal_process_input(void)
+{
+    if (_InputLen>1 && (_Input[_InputLen-1]=='\r' || _Input[_InputLen-1]=='\n'))
+    {
+    	int start;
+    	if (strstart(_Input, "status")) 		  main_status();
+    	else if (start=strstart(_Input, "power")) main_power(&_Input[start]);
+    	memset(_Input, 0, sizeof(_Input));
+    	_InputLen=0;
+    	printf(">> ");
+    }
+
+    fflush(stdout);
+}

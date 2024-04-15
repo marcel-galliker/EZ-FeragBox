@@ -1,0 +1,19 @@
+/*
+ * terminal.h
+ *
+ *  Created on: Mar 25, 2024
+ *      Author: WPATR
+ */
+
+#ifndef INC_TERMINAL_H_
+#define INC_TERMINAL_H_
+
+#include <stddef.h>
+
+#include "ring_buffer.h"
+
+void terminal_init(RingBuffer *rb);
+void terminal_process_input(void);
+void terminal_register_command(const char *name, const char *description, void (*func)(const char*));
+
+#endif /* INC_TERMINAL_H_ */

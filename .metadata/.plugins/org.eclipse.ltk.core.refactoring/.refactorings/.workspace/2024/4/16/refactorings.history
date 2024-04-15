@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Delete resource &apos;blink/Core/Src/ring_buffer.c&apos;" deleteContents="false" description="Delete resource &apos;blink/Core/Src/ring_buffer.c&apos;" element1="/blink/Core/Src/ring_buffer.c" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1713167757637"/>
+</session>

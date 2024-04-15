@@ -1,0 +1,15 @@
+/*
+ * utils.c
+ *
+ *  Created on: Apr 12, 2024
+ *      Author: marce_v533nrj
+ */
+
+#include <string.h>
+
+int strstart(const char *str, const char *start)
+{
+	int len=strlen(start);
+	if (!strcmp(str, start, len)) return len;
+	return 0;
+}

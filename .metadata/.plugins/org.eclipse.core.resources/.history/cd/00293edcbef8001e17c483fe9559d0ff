@@ -1,0 +1,77 @@
+#include "terminal.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+
+#define MAX_COMMANDS 10
+#define MAX_INPUT_LENGTH 128
+#define BACKSPACE 127 // Or '\b', depending on your system
+
+typedef void (*CommandFunc)(const char*);
+
+typedef struct {
+    const char* name;
+    const char* description;
+    CommandFunc func;
+} Command;
+
+static Command commands[MAX_COMMANDS];
+static int commandCount = 0;
+static RingBuffer* cliRingBuffer = NULL;
+
+void terminal_init(RingBuffer* rb) {
+    cliRingBuffer = rb; // Store the pointer to the ring buffer
+    commandCount = 0; // Reset command count
+    printf(">> ");
+}
+
+void terminal_register_command(const char *name, const char *description, CommandFunc func) {
+    if (commandCount < MAX_COMMANDS) {
+        commands[commandCount++] = (Command){name, description, func};
+    }
+}
+
+static void execute_command(char *input) {
+    char* command = strtok(input, " ");
+    char* args = strtok(NULL, "");
+
+    for (int i = 0; i < commandCount; i++) {
+        if (strcmp(commands[i].name, command) == 0) {
+            commands[i].func(args);
+            return;
+        }
+    }
+
+    printf("Command not found.\n");
+}
+
+void terminal_process_input(void) {
+    static char inputBuffer[MAX_INPUT_LENGTH];
+    static size_t inputLength = 0;
+    uint8_t data;
+
+    while (!RingBuffer_IsEmpty(cliRingBuffer)) {
+        RingBuffer_GetChar(cliRingBuffer, &data);
+        char c = data;
+
+        if (c == '\n' || c == '\r') {
+            inputBuffer[inputLength] = '\0'; // Null-terminate
+            printf("\n"); // Move to a new line
+            if(inputLength != 0)
+            	execute_command(inputBuffer);
+            inputLength = 0; // Reset for next input
+            printf("\n");
+            printf(">> "); // Show prompt again
+        } else if (c == BACKSPACE) {
+            if (inputLength > 0) {
+                inputLength--;
+                printf("\b \b"); // Move cursor back, erase character, move back again
+            }
+        } else if (inputLength < MAX_INPUT_LENGTH - 1) {
+            inputBuffer[inputLength++] = c;
+            putchar(c); // Echo the character
+        }
+    }
+
+    fflush(stdout);
+}
