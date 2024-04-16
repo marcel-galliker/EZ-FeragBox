@@ -61,8 +61,8 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-uint8_t RxDataNUC;
-uint8_t RxDataFERAG;
+volatile uint8_t RxDataNUC;
+volatile uint8_t RxDataFERAG;
 
 // USB CDC handle
 extern USBD_HandleTypeDef hUsbDeviceFS;
@@ -566,6 +566,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		term_handle_char(RxDataNUC);
 		HAL_UART_Receive_IT(&huart3, &RxDataNUC, 1);
 	}
+}
+
+//--- ferag_send_char -----------------------
+void ferag_send_char(char data)
+{
+	HAL_UART_Transmit(&huart1, (uint8_t *)data, 1, HAL_MAX_DELAY);
 }
 
 //--- _tick_10ms ---------------------

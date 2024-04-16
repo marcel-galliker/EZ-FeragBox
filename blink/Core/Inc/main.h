@@ -63,6 +63,8 @@ int32_t	enc_get_pos(void);
 void    power_nuc(int on);
 void    power_display(int on);
 
+void	ferag_send_char(char data);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
