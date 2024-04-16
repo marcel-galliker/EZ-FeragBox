@@ -1,21 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value="hUsbDeviceFS"/>
-		<item key="wrap" value="true"/>
+		<item key="selection" value="huart1"/>
+		<item key="wrap" value="false"/>
 		<item key="casesensitive" value="false"/>
-		<item key="wholeword" value="true"/>
+		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
-			<item value="hUsbDeviceFS"/>
-			<item value="usb_device"/>
-			<item value="usb"/>
+			<item value="huart1"/>
+			<item value="huart3"/>
+			<item value="HAL_UART_Receive_IT"/>
+			<item value="term_"/>
+			<item value="trerm_"/>
+			<item value="MX_USART3_UART_Init"/>
+			<item value="USART1"/>
 			<item value="uart"/>
-			<item value="TIM2"/>
-			<item value="htim2"/>
-			<item value="speed"/>
-			<item value="Encoder_Configure"/>
+			<item value="_Status"/>
+			<item value="_time"/>
+			<item value="_Counter"/>
+			<item value="_cnt"/>
+			<item value="printGoStatus"/>
 		</list>
 		<list key="replacehistory">
 			<item value=""/>

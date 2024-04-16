@@ -2,23 +2,29 @@
  * encoder_engine.c
  *
  *  Created on: Mar 25, 2024
- *      Author: WPATR
+ *      Author: marcel@galliker-engineering.ch
  */
+// Encoder Output: TIM2
+//
+// Encoder Input: TIM5
+// https://www.steppeschool.com/pages/blog/stm32-timer-encoder-mode
 
-#include "utils.h"
+#include "ge_common.h"
+#include "EzFeragBox_def.h"
 #include "main.h"
 #include "enc.h"
 
 static uint32_t _Timer_clock_frequency;
 static uint32_t _Prescaler;
 
-static int     _Init=FALSE;
-static int32_t _SpeedSet;
-static int32_t _SpeedChange;
-static int32_t _Speed = 0;
-static int32_t _Counter=0;
-static int32_t _time;
-static int32_t _cnt=0;
+static SEZFB_EncStatus _EncStatus;
+
+static int   _Init=FALSE;
+static INT32 _EncInTime=0;
+static INT32 _SpeedOutSet;
+static INT32 _SpeedOutChange;
+static INT32 _EncOutTime;
+static INT32 _EncOutSpeedCnt=0;
 
 static void _init_pwm(int32_t speed);
 
@@ -29,17 +35,38 @@ void enc_init(void)
 	_Prescaler=1;
 }
 
+//--- enc_irq ------------------------
+void enc_in_irq(TIM_HandleTypeDef *htim)
+{
+	int time=HAL_GetTick();
+	int pos = _EncStatus.encInPos;
+	_EncStatus.encInPos = enc_get_pos();
+	int dist=_EncStatus.encInPos-pos;
+	int t=time-_EncInTime;
+	if (t==0) _EncStatus.encInSpeed=0;
+	else _EncStatus.encInSpeed = (dist*1000)/t;
+
+	_EncInTime=time;
+
+	printf("TRACE: Encoder In: pos=%d, speed=%d, time=%d\n", (int)_EncStatus.encInPos, (int)_EncStatus.encInSpeed, t);
+}
+
 //--- enc_tick_10ms ---------------------------
 void enc_tick_10ms(int ticks)
 {
-	if (ticks-_time>1000)
+	if (ticks-_EncOutTime>1000)
 	{
-		float cnt=1000*(float)(_Counter-_cnt);
-		float t=(float)(ticks-_time);
-		_Speed = (int32_t) (cnt/t);
-		_cnt = _Counter;
-		_time=ticks;
+		float t=(float)(ticks-_EncOutTime);
+		_EncStatus.encOutSpeed = (int32_t) (1000.0*_EncOutSpeedCnt/t);
+		_EncOutTime=ticks;
+		_EncOutSpeedCnt=0;
 	}
+}
+
+//--- enc_get_status -------------------------------
+void enc_get_status(SEZFB_EncStatus *pstatus)
+{
+	memcpy(pstatus, &_EncStatus, sizeof(_EncStatus));
 }
 
 //--- enc_command ----------------------------------
@@ -58,12 +85,11 @@ void enc_command(const char *args)
     }
 }
 
-
 //--- enc_set_speed ---------------------------
 void enc_set_speed(int32_t speed)
 {
 	if (!_Init) _init_pwm(speed);
-	else if (speed!=_SpeedSet) _SpeedChange = speed;
+	else if (speed!=_SpeedOutSet) _SpeedOutChange = speed;
 }
 
 //--- _init_pwm ------------------------------
@@ -129,23 +155,18 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
   {
 	  if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
 	  {
-		  _Counter++;
-		  if (_SpeedChange)
+		  _EncStatus.encOutPos++;
+		  _EncOutSpeedCnt++;
+		  if (_SpeedOutChange)
 		  {
 			  HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_1);
 			  HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_2);
 			  _Init=FALSE;
-			  _init_pwm(_SpeedChange);
-			  _SpeedChange = 0;
+			  _init_pwm(_SpeedOutChange);
+			  _SpeedOutChange = 0;
 		  }
 	  }
   }
-}
-
-//--- enc_get_counter ----------------------------------
-int32_t enc_get_counter(void)
-{
-	return _Counter;
 }
 
 //--- enc_start ---------------------------
@@ -162,10 +183,3 @@ void enc_stop(void) {
     HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_1);
     HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_2);
 }
-
-//--- enc_get_speed ------------------------
-int32_t enc_get_speed(void)
-{
-	return _Speed;
-}
-

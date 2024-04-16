@@ -23,6 +23,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include <math.h>
+#include "enc.h"
+#include "box.h"
+#include "term.h"
 #include "usbd_cdc_if.h"
 
 #include "AD5593.h"
@@ -57,7 +61,8 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-volatile uint8_t RxData;
+uint8_t RxDataNUC;
+uint8_t RxDataFERAG;
 
 // USB CDC handle
 extern USBD_HandleTypeDef hUsbDeviceFS;
@@ -126,7 +131,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // Kick off asynchronous UART RCV
-  HAL_UART_Receive_IT(&huart3, &RxData, 1);
+  HAL_UART_Receive_IT(&huart1, &RxDataFERAG, 1);
+  HAL_UART_Receive_IT(&huart3, &RxDataNUC, 1);
 
   term_init();
   enc_init();
@@ -150,7 +156,8 @@ int main(void)
 			_tick_10ms(ticks);
 			_ticks=ticks;
 		}
-		term_process_input();
+		box_idle();
+		term_idle();
 	}
   /* USER CODE END 3 */
 }
@@ -185,8 +192,8 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
@@ -263,7 +270,7 @@ static void MX_TIM2_Init(void)
 {
 
   /* USER CODE BEGIN TIM2_Init 0 */
-
+//	PWM for encoder output
   /* USER CODE END TIM2_Init 0 */
 
   TIM_MasterConfigTypeDef sMasterConfig = {0};
@@ -326,8 +333,8 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 4800;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Prescaler = 7200;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_DOWN;
   htim3.Init.Period = 10000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -350,6 +357,7 @@ static void MX_TIM3_Init(void)
 	if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK) {
 		Error_Handler();
 	}
+	HAL_TIM_Base_Start(&htim3);
   /* USER CODE END TIM3_Init 2 */
 
 }
@@ -413,6 +421,8 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE BEGIN USART1_Init 0 */
 
+//---------------------- UART1: Communication to FERAG --------------------------------
+
   /* USER CODE END USART1_Init 0 */
 
   /* USER CODE BEGIN USART1_Init 1 */
@@ -447,6 +457,8 @@ static void MX_USART3_UART_Init(void)
 {
 
   /* USER CODE BEGIN USART3_Init 0 */
+
+//---------------------- UART3: Communication to NUC-PC --------------------------------
 
   /* USER CODE END USART3_Init 0 */
 
@@ -529,14 +541,30 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+//--- HAL_TIM_PeriodElapsedCallback -------------------------
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim==&htim3) enc_in_irq(htim);
+}
+
+//--- enc_get_pos -------------------------------------
+int32_t	enc_get_pos(void)
+{
+	return __HAL_TIM_GET_COUNTER(&htim5);
+}
 
 // UART RX Interrupt function override
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if (huart->Instance == USART3)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if (huart->Instance == USART1)
 	{
-		term_addChar(RxData);
-		// Ready to receive the next byte
-		HAL_UART_Receive_IT(&huart3, &RxData, 1);
+		box_handle_char(RxDataFERAG);
+		HAL_UART_Receive_IT(&huart1, &RxDataFERAG, 1);
+	}
+	else if (huart->Instance == USART3)
+	{
+		term_handle_char(RxDataNUC);
+		HAL_UART_Receive_IT(&huart3, &RxDataNUC, 1);
 	}
 }
 
@@ -592,44 +620,19 @@ uint8_t gpio_get_dipswitches(void)
     return dipswitches;
 }
 
-//--- main_power -----------------------------------
-void main_power(const char* args)
+//--- power_nuc -----------------------------
+void    power_nuc(int on)
 {
-    char device[10]; // Buffer for the device name ("nuc" or "display")
-    char action[4];  // Buffer for the action ("on" or "off")
-
-    // Parse the command arguments
-    int parsedItems = sscanf(args, "%9s %3s", device, action);
-    if (parsedItems != 2) {
-        printf("Invalid command. Use 'power nuc on/off' or 'power display on/off'\n");
-        return;
-    }
-
-    if (strcmp(device, "nuc") == 0) {
-        if (strcmp(action, "on") == 0) {
-            HAL_GPIO_WritePin(NUC_PWR_EN_GPIO_Port, NUC_PWR_EN_Pin, GPIO_PIN_SET);
-            printf("NUC power on\n");
-        } else if (strcmp(action, "off") == 0) {
-            HAL_GPIO_WritePin(NUC_PWR_EN_GPIO_Port, NUC_PWR_EN_Pin, GPIO_PIN_RESET);
-            printf("NUC power off\n");
-        } else {
-            printf("Invalid action for NUC. Use 'on' or 'off'.\n");
-        }
-    } else if (strcmp(device, "display") == 0) {
-        if (strcmp(action, "on") == 0) {
-            HAL_GPIO_WritePin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin, GPIO_PIN_SET);
-            printf("Display power on\n");
-        } else if (strcmp(action, "off") == 0) {
-            HAL_GPIO_WritePin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin, GPIO_PIN_RESET);
-            printf("Display power off\n");
-        } else {
-            printf("Invalid action for display. Use 'on' or 'off'.\n");
-        }
-    } else {
-        printf("Invalid device. Use 'nuc' or 'display'.\n");
-    }
+	if (on) HAL_GPIO_WritePin(NUC_PWR_EN_GPIO_Port, NUC_PWR_EN_Pin, GPIO_PIN_SET);
+	else 	HAL_GPIO_WritePin(NUC_PWR_EN_GPIO_Port, NUC_PWR_EN_Pin, GPIO_PIN_RESET);
 }
 
+//--- power_display -------------------------
+void    power_display(int on)
+{
+	if (on) HAL_GPIO_WritePin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin, GPIO_PIN_SET);
+	else 	HAL_GPIO_WritePin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin, GPIO_PIN_RESET);
+}
 
 // Retarget stdout to UART and CDC
 WRITE_PROTOTYPE {

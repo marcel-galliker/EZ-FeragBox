@@ -10,26 +10,19 @@
 
 
 #include "stm32f3xx_hal.h"
+#include "EzFeragBox_def.h"
 
 void enc_command(const char *args);
 
 // Initializes the encoder engine.
 void enc_init(void);
 void enc_tick_10ms(int ticks);
-
-// Starts generating the encoder signal with the previously configured parameters.
-void enc_start(void);
-
-// Stops the encoder signal, setting both outputs to low.
-void enc_stop(void);
-
-// Configures the encoder simulation parameters.
-// speed: Frequency of the PWM signal.
-// direction: 0 for forward, non-zero for reverse.
+void enc_in_irq(TIM_HandleTypeDef *htim);
 void enc_set_speed(int32_t speed);
 
-// Get current speed
-int32_t enc_get_speed(void);
-int32_t enc_get_counter(void);
+void enc_get_status(SEZFB_EncStatus *pstatus);
+
+void enc_start(void);
+void enc_stop(void);
 
 #endif /* INC_ENCODER_ENGINE_H_ */

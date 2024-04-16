@@ -59,8 +59,9 @@ float 	adc_get_value(int no, float factor);
 uint8_t adc_get_revision(float val);
 float 	adc_get_temp(void);
 uint8_t gpio_get_dipswitches(void);
-
-void main_power(const char *args);
+int32_t	enc_get_pos(void);
+void    power_nuc(int on);
+void    power_display(int on);
 
 /* USER CODE END EFP */
 
