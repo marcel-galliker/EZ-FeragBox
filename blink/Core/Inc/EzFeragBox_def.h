@@ -20,6 +20,8 @@
 
 #include "ge_common.h"
 
+#pragma pack(1)
+
 typedef struct
 {
 	INT32 	encInSpeed;
@@ -52,3 +54,5 @@ typedef struct
 
 	INT32			pgCnt;
 } SEZFB_Status;
+
+#pragma pack()

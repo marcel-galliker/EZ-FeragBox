@@ -63,6 +63,7 @@ UART_HandleTypeDef huart3;
 /* USER CODE BEGIN PV */
 volatile uint8_t RxDataNUC;
 volatile uint8_t RxDataFERAG;
+static int _powerDisplay=12000;
 
 // USB CDC handle
 extern USBD_HandleTypeDef hUsbDeviceFS;
@@ -138,6 +139,9 @@ int main(void)
   enc_init();
   box_init();
 
+  power_nuc(TRUE);
+//  power_display(TRUE);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -155,6 +159,11 @@ int main(void)
 		{
 			_tick_10ms(ticks);
 			_ticks=ticks;
+			if (_powerDisplay && _ticks>_powerDisplay)
+			{
+				_powerDisplay=0;
+				power_display(TRUE);
+			}
 		}
 		box_idle();
 		term_idle();
