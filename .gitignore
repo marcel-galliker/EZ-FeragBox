@@ -1,3 +1,9 @@
 *.log
 /blink/Debug
 /.metadata/.plugins/org.eclipse.core.resources/.history
+/.metadata/.plugins/org.eclipse.cdt.core/.log
+/.metadata/.plugins/org.eclipse.cdt.core/*.pdom
+/.metadata/.plugins/org.eclipse.core.resources/.projects
+/.metadata/.plugins/org.eclipse.core.resources/.root
+/.metadata/.plugins/org.eclipse.core.resources/.safetable
+/.metadata/.plugins/org.eclipse.cdt.ui/*.log

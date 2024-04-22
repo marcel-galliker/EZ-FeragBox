@@ -132,8 +132,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // Kick off asynchronous UART RCV
-  HAL_UART_Receive_IT(&huart1, &RxDataFERAG, 1);
-  HAL_UART_Receive_IT(&huart3, &RxDataNUC, 1);
+  HAL_UART_Receive_IT(&huart1, (uint8_t*)&RxDataFERAG, 1);
+  HAL_UART_Receive_IT(&huart3, (uint8_t*)&RxDataNUC, 1);
 
   term_init();
   enc_init();
@@ -438,10 +438,10 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 38400;
+  huart1.Init.BaudRate = 57600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Parity = UART_PARITY_ODD;
   huart1.Init.Mode = UART_MODE_TX_RX;
   huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart1.Init.OverSampling = UART_OVERSAMPLING_16;
@@ -567,20 +567,20 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if (huart->Instance == USART1)
 	{
-		box_handle_char(RxDataFERAG);
-		HAL_UART_Receive_IT(&huart1, &RxDataFERAG, 1);
+		box_handle_ferag_char(RxDataFERAG);
+		HAL_UART_Receive_IT(&huart1, (uint8_t*)&RxDataFERAG, 1);
 	}
 	else if (huart->Instance == USART3)
 	{
 		term_handle_char(RxDataNUC);
-		HAL_UART_Receive_IT(&huart3, &RxDataNUC, 1);
+		HAL_UART_Receive_IT(&huart3, (uint8_t*)&RxDataNUC, 1);
 	}
 }
 
 //--- ferag_send_char -----------------------
 void ferag_send_char(char data)
 {
-	HAL_UART_Transmit(&huart1, (uint8_t *)data, 1, HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart1, (uint8_t*)&data, 1, HAL_MAX_DELAY);
 }
 
 //--- _tick_10ms ---------------------

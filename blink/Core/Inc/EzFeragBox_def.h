@@ -52,7 +52,11 @@ typedef struct
 
 	SEZFB_EncStatus	enc;
 
+	INT32			test;
+	INT32			paceId;
+	INT32			dtCnt;
 	INT32			pgCnt;
+	INT32			pdCnt;
 } SEZFB_Status;
 
 #pragma pack()

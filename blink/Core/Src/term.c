@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include "box.h"
 #include "enc.h"
@@ -29,8 +30,12 @@ void term_idle(void)
     if (_InputLen>1 && (_Input[_InputLen-1]=='\r' || _Input[_InputLen-1]=='\n'))
     {
     	char *args;
+    //	printf("TERM: >>%s<<\n", _Input);
     	if (strstart(_Input, "status")) 		  		box_send_status();
     	else if ((args=strstart(_Input, "encoder"))) 	enc_command(args);
+    	else if ((args=strstart(_Input, "start"))) 		box_start();
+    	else if ((args=strstart(_Input, "stop"))) 		box_stop();
+    	else if ((args=strstart(_Input, "pgDelay"))) 	box_set_pgDelay(atoi(args));
     	else if ((args=strstart(_Input, "pg"))) 		box_printGo();
 
     	memset(_Input, 0, sizeof(_Input));

@@ -48,7 +48,7 @@ void enc_in_irq(TIM_HandleTypeDef *htim)
 
 	_EncInTime=time;
 
-	printf("TRACE: Encoder In: pos=%d, speed=%d, time=%d\n", (int)_EncStatus.encInPos, (int)_EncStatus.encInSpeed, t);
+//	printf("TRACE: Encoder In: pos=%d, speed=%d, time=%d\n", (int)_EncStatus.encInPos, (int)_EncStatus.encInSpeed, t);
 }
 
 //--- enc_tick_10ms ---------------------------
@@ -173,6 +173,7 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 void enc_start(void)
 {
     // Apply the last configured settings and start PWM
+	_EncStatus.encOutPos=0;
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 }
