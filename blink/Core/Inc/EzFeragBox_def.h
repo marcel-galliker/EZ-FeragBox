@@ -53,6 +53,7 @@ typedef struct
 	SEZFB_EncStatus	enc;
 
 	INT32			test;
+	INT32			feragMsgCnt;
 	INT32			paceId;
 	INT32			dtCnt;
 	INT32			pgCnt;

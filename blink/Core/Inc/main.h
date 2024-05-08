@@ -68,10 +68,6 @@ void	ferag_send_char(char data);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define RS422_ENC_A_Pin GPIO_PIN_0
-#define RS422_ENC_A_GPIO_Port GPIOA
-#define RS422_ENC_B_Pin GPIO_PIN_1
-#define RS422_ENC_B_GPIO_Port GPIOA
 #define DIP_5_Pin GPIO_PIN_2
 #define DIP_5_GPIO_Port GPIOA
 #define DIP_4_Pin GPIO_PIN_3

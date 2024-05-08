@@ -20,6 +20,8 @@ static uint32_t _Prescaler;
 static SEZFB_EncStatus _EncStatus;
 
 static int   _Init=FALSE;
+static float _EncIn_incPM  = 10240;	// impulese/ m
+static float _EncOut_incPM = 128 * 1000.0 / 25.4; 	// impulese/ m (128 DPI)
 static INT32 _EncInTime=0;
 static INT32 _SpeedOutSet;
 static INT32 _SpeedOutChange;
@@ -48,6 +50,9 @@ void enc_in_irq(TIM_HandleTypeDef *htim)
 
 	_EncInTime=time;
 
+	//--- set output speed ------
+	enc_set_speed((int)(_EncStatus.encInSpeed*_EncOut_incPM/_EncIn_incPM));
+
 //	printf("TRACE: Encoder In: pos=%d, speed=%d, time=%d\n", (int)_EncStatus.encInPos, (int)_EncStatus.encInSpeed, t);
 }
 
@@ -57,7 +62,7 @@ void enc_tick_10ms(int ticks)
 	if (ticks-_EncOutTime>1000)
 	{
 		float t=(float)(ticks-_EncOutTime);
-		_EncStatus.encOutSpeed = (int32_t) (1000.0*_EncOutSpeedCnt/t);
+		_EncStatus.encOutSpeed = (int32_t) (1000.0*_EncOutSpeedCnt/t/2);
 		_EncOutTime=ticks;
 		_EncOutSpeedCnt=0;
 	}
