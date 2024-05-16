@@ -1,0 +1,3 @@
+../Core/Src/term.c:15:6:term_init	8	static
+../Core/Src/term.c:20:6:term_handle_char	16	static
+../Core/Src/term.c:28:6:term_idle	16	static

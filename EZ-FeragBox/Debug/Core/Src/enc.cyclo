@@ -1,0 +1,11 @@
+../Core/Src/enc.c:36:6:enc_init	1
+../Core/Src/enc.c:43:6:enc_in_irq	3
+../Core/Src/enc.c:65:6:enc_tick_10ms	2
+../Core/Src/enc.c:77:6:enc_get_status	1
+../Core/Src/enc.c:83:6:enc_command	4
+../Core/Src/enc.c:98:6:enc_set_speed	4
+../Core/Src/enc.c:110:6:enc_fixSpeed	1
+../Core/Src/enc.c:116:13:_init_pwm	5
+../Core/Src/enc.c:172:6:HAL_TIM_PWM_PulseFinishedCallback	4
+../Core/Src/enc.c:194:6:enc_start	2
+../Core/Src/enc.c:206:6:enc_stop	1

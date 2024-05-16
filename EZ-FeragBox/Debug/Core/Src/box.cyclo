@@ -1,0 +1,13 @@
+../Core/Src/box.c:73:6:box_init	1
+../Core/Src/box.c:86:6:box_set_pgDelay	1
+../Core/Src/box.c:93:6:box_start	1
+../Core/Src/box.c:123:6:box_stop	1
+../Core/Src/box.c:131:6:box_idle	1
+../Core/Src/box.c:139:6:box_tick_10ms	3
+../Core/Src/box.c:160:13:_check_system	1
+../Core/Src/box.c:184:6:box_handle_ferag_char	2
+../Core/Src/box.c:203:13:_handle_feragMsg	6
+../Core/Src/box.c:233:13:_handle_encoder	7
+../Core/Src/box.c:275:13:_send_print_done	1
+../Core/Src/box.c:283:6:box_printGo	4
+../Core/Src/box.c:301:6:box_send_status	1

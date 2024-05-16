@@ -1,0 +1,2 @@
+../Core/Src/AD5593.c:47:19:AD55936_init	32	static
+../Core/Src/AD5593.c:78:19:AD5593R_ReadADC	48	static

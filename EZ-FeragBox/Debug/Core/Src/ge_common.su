@@ -1,0 +1,3 @@
+../Core/Src/ge_common.c:13:7:strstart	24	static
+../Core/Src/ge_common.c:25:7:bin2hex	40	static
+../Core/Src/ge_common.c:38:7:hex2bin	48	static
