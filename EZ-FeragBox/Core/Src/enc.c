@@ -28,7 +28,7 @@ static INT32 _SpeedOutSet;
 static INT32 _SpeedOutChange;
 static INT32 _EncOutTime;
 static INT32 _EncOutSpeedCnt=0;
-static int 	 _FixedSpeed;
+static int 	 _FixedSpeed=50000;
 
 static void _init_pwm(int32_t speed);
 

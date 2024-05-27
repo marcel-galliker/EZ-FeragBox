@@ -57,9 +57,8 @@ static int			_TrackInIdx, _TrackOutIdx;
 static int			_PaceId;
 static int			_PrintGoDelay=500;
 static int			_EncoderPos;
-static int			_PrintDoneIn;
+static int			_PrinterReadyIn=-1;
 static int			_PrintDoneDelay;
-static int			_AutoPrintGo = 1000; // ms
 
 //--- prototypes ------------------
 
@@ -67,17 +66,19 @@ static void _check_system(void);
 static void _handle_feragMsg(void);
 static void _handle_encoder(void);
 // static void _check_print_done(void);
+static void _check_printer_ready(void);
 static void _send_print_done(void);
 
 //--- box_init -------------------------------
 void box_init(void)
 {
 	memset(&_Status, 0, sizeof(_Status));
-	_FeragMsgIn  = 0;
-	_FeragMsgOut = 0;
+	_FeragMsgIn      = 0;
+	_FeragMsgOut     = 0;
 	_TrackInIdx  	 = 0;
 	_TrackOutIdx 	 = 0;
-	_PrintDoneDelay = 0;
+	_PrintDoneDelay  = 0;
+	_PrinterReadyIn  = -1;
 	box_start();
 	printf("LOG: box_init\n");
 }
@@ -102,7 +103,7 @@ void box_start(void)
 	_Status.pdCnt = 0;
 	_EncoderPos   = 0;
 	_PrintDoneDelay = 0;
-	_PrintDoneIn  = -1;
+	_PrinterReadyIn  = -1;
 	_PaceId		  = -1;
 	box_send_status();
 	_Running = TRUE;
@@ -132,6 +133,7 @@ void box_idle(void)
 {
 	_handle_feragMsg();
 	_handle_encoder();
+	_check_printer_ready();
 //	if (!SIMULATION) _check_print_done();
 }
 
@@ -139,13 +141,6 @@ void box_idle(void)
 void box_tick_10ms(int ticks)
 {
 	_Ticks = ticks;
-	/*
-	if (_Running && _AutoPrintGo && (ticks%_AutoPrintGo)<10)
-	{
-		printf("FeragBox: AutoPrintGo\n");
-		box_printGo();
-	}
-	*/
 	if (_TicksPgOff && _Ticks>_TicksPgOff)
 	{
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
@@ -270,6 +265,16 @@ static void _check_print_done(void)
 	_PrintDoneIn = pd;
 }
 */
+
+static void _check_printer_ready(void)
+{
+	int ready=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
+	if (_PrinterReadyIn<0) _PrinterReadyIn=ready;
+	if (_PrinterReadyIn!=ready)
+		printf("LOG: FeragBox: PrinterReady=%d\n", ready);
+	_PrinterReadyIn = ready;
+}
+
 
 //--- _send_print_done ----------------------------------------
 static void _send_print_done(void)
