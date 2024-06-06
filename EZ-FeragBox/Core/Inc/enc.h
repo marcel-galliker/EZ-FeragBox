@@ -20,6 +20,7 @@ void enc_command(const char *args);
 void enc_init(void);
 void enc_tick_10ms(int ticks);
 void enc_in_irq(TIM_HandleTypeDef *htim);
+void enc_out_irq(TIM_HandleTypeDef *htim);
 void enc_set_speed(int32_t speed);
 int  enc_fixSpeed(void);
 void enc_get_status(SEZFB_EncStatus *pstatus);

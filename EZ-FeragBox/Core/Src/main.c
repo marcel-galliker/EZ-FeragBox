@@ -45,7 +45,9 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+// htim2: Encoder out clock
+// htim3:
+// htim5: Encoder counter
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -294,7 +296,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
+  htim2.Init.Period = 100000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -313,7 +315,6 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-
   /* USER CODE END TIM2_Init 2 */
 
 }
@@ -568,8 +569,8 @@ static void MX_GPIO_Init(void)
 //--- HAL_TIM_PeriodElapsedCallback -------------------------
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if (htim==&htim3) enc_in_irq(htim);
-	else if (htim==&htim2) HAL_TIM_QUARTER_PulseFinishedCallback(htim);
+	if (htim==&htim3) 		enc_in_irq(htim);
+	else if (htim==&htim2) 	enc_out_irq(htim);
 }
 
 //--- enc_get_pos -------------------------------------

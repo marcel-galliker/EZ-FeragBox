@@ -57,12 +57,8 @@ void enc_in_irq(TIM_HandleTypeDef *htim)
 	_EncInTime=time;
 
 	//--- set output speed ------
-	enc_set_speed((int)(_EncStatus.encInSpeed*_EncOut_incPM/_EncIn_incPM));
-
-//	if (!_Running)
-//		enc_start();
-
-//	printf("TRACE: Encoder In: pos=%d, speed=%d, time=%d\n", (int)_EncStatus.encInPos, (int)_EncStatus.encInSpeed, t);
+	if (_Running && !_FixedSpeed)
+		enc_set_speed((int)(_EncStatus.encInSpeed*_EncOut_incPM/_EncIn_incPM));
 }
 
 //--- enc_tick_10ms ---------------------------
@@ -74,6 +70,12 @@ void enc_tick_10ms(int ticks)
 		_EncStatus.encOutSpeed = (int32_t) (1000.0*_EncOutSpeedCnt/t/2);
 		_EncOutTime=ticks;
 		_EncOutSpeedCnt=0;
+		if (_FixedSpeed==777 && _SpeedOutSet<20000)
+		{
+			_SpeedOutSet    += 1000;
+			_SpeedOutChange = TRUE;
+			printf("LOG: SetSpeed=%d Hz\n", _SpeedOutSet);
+		}
 	}
 }
 
@@ -110,8 +112,8 @@ void enc_set_speed(int32_t speed)
 	if (!_Init) _set_speed(speed);
 	else if (speed!=_SpeedOutSet)
 	{
-		_SpeedOutChange = TRUE;
 		_SpeedOutSet = speed;
+		_SpeedOutChange = TRUE;
 		printf("Encoder Speedchange=%d\n", speed);
 	}
 }
@@ -129,6 +131,7 @@ static void _set_speed(int32_t speed)
 	{
 		if (speed==0)
 		{
+			printf("LOG: encoder HAL_TIM_Base_Stop\n");
 			HAL_TIM_Base_Stop(&htim2);
 			_Running = FALSE;
 		}
@@ -136,19 +139,24 @@ static void _set_speed(int32_t speed)
 		{
 			uint32_t period = ((_Timer_clock_frequency / (_Prescaler * speed)) / 2) - 1;
 
-			TIM2->CNT = period;
+		//	TIM2->CNT = period;
+			TIM2->ARR = period;
 
 			if (!_Running)
 			{
 				_Running = TRUE;
-				HAL_TIM_Base_Start_IT(&htim2);
+				printf("LOG: encoder HAL_TIM_Base_Start period=%d\n", period);
+				if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK) {
+					Error_Handler();
+				}
+				HAL_TIM_Base_Start(&htim2);
 			}
 		}
 	}
 }
 
-//--- HAL_TIM_QUARTER_PulseFinishedCallback -------------------------------
-void HAL_TIM_QUARTER_PulseFinishedCallback(TIM_HandleTypeDef *htim)
+//--- enc_out_irq -------------------------------
+void enc_out_irq(TIM_HandleTypeDef *htim)
 {
   EZ_EncoderOutPos++;
   _EncOutSpeedCnt++;
