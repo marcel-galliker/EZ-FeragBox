@@ -47,8 +47,6 @@ extern "C" {
 extern TIM_HandleTypeDef htim2;
 /* USER CODE END EM */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -92,10 +90,10 @@ void	ferag_send_char(char data);
 #define NUC_PWR_EN_GPIO_Port GPIOF
 #define DISPLAY_PWR_EN_Pin GPIO_PIN_7
 #define DISPLAY_PWR_EN_GPIO_Port GPIOF
-#define ENC_OUT_A_Pin GPIO_PIN_15
-#define ENC_OUT_A_GPIO_Port GPIOA
-#define ENC_OUT_B_Pin GPIO_PIN_3
-#define ENC_OUT_B_GPIO_Port GPIOB
+#define ENCODER_A_Pin GPIO_PIN_15
+#define ENCODER_A_GPIO_Port GPIOA
+#define ENCODER_B_Pin GPIO_PIN_3
+#define ENCODER_B_GPIO_Port GPIOB
 #define I2C1_SCL_Pin GPIO_PIN_6
 #define I2C1_SCL_GPIO_Port GPIOB
 #define I2C1_SDA_Pin GPIO_PIN_7

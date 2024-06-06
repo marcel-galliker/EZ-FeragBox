@@ -25,28 +25,31 @@
 typedef struct
 {
 	INT32 	encInSpeed;
-	UINT32 	encInPos;
 	INT32 	encOutSpeed;
-	UINT32	encOutPos;
 } SEZFB_EncStatus;
 
 typedef struct
 {
-	float voltage3V3;
-	float voltage5V;
-	float voltage12V;
-	float voltage12VNuc;
-	float voltage12VDisplay;
-	float voltage24V;
-	float voltagePcbRevision;
+	UINT8 voltage3V3;
+	UINT8 voltage5V;
+	UINT8 voltage12V;
+	UINT8 voltage12VNuc;
+	UINT8 voltage12VDisplay;
+	UINT8 voltage24V;
+	UINT8 voltagePcbRevision;
 } SEZFB_Voltage;
 
 typedef struct
 {
-	UINT8 			nucPower;
-	UINT8 			displayPower;
+	UINT8 		flags;
+	#define FLAG_nucPower		0x01
+	#define FLAG_displayPower	0x02
+	#define FLAG_tcp_connected	0x04
+
+	UINT8			tcp_status;
+
 	UINT8 			dipSwitch;
-	float 			boardTemperature;
+	UINT8 			boardTemperature;
 	SEZFB_Voltage 	voltages;
 	UINT8 			pcbRevision;
 
@@ -57,6 +60,9 @@ typedef struct
 	INT32			feragMsgOutCnt;
 	INT32			paceId;
 	INT32			dtCnt;
+	INT32			aliveCnt;
+	INT32			emptyGoCnt;
+	INT32			emptyDoneCnt;
 	INT32			pgCnt;
 	INT32			pdCnt;
 } SEZFB_Status;

@@ -47,18 +47,20 @@ typedef struct SProduct
 static int			_Running;
 static SEZFB_Status _Status;
 static int 		    _Ticks;
-static int 		    _TicksPgOff;
+static int			_TicksSysCheck;
 static SFeragMsg 	_FeragMsg;
 static int			_FeragMsgIn, _FeragMsgOut;
 
-#define TRACKING_CNT	8
+#define TRACKING_CNT	128
 static SProduct		_Tracking[TRACKING_CNT];
 static int			_TrackInIdx, _TrackOutIdx;
 static int			_PaceId;
 static int			_PrintGoDelay=500;
+static int 		    _PrintGoOffDelay=0;
 static int			_EncoderPos;
 static int			_PrinterReadyIn=-1;
 static int			_PrintDoneDelay;
+static int 			_TrackingError;
 
 //--- prototypes ------------------
 
@@ -102,6 +104,7 @@ void box_start(void)
 	_Status.pgCnt = 0;
 	_Status.pdCnt = 0;
 	_EncoderPos   = 0;
+	_TrackingError = FALSE;
 	_PrintDoneDelay = 0;
 	_PrinterReadyIn  = -1;
 	_PaceId		  = -1;
@@ -141,28 +144,26 @@ void box_idle(void)
 void box_tick_10ms(int ticks)
 {
 	_Ticks = ticks;
-	if (_TicksPgOff && _Ticks>_TicksPgOff)
+
+	if (_Ticks > _TicksSysCheck)
 	{
-		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
-	//	printf("PrintGo OFF %d\n",  _Ticks);
-//		if (SIMULATION) _check_print_done();
-		_TicksPgOff=0;
+		_TicksSysCheck = _Ticks+500;
+		_check_system();
 	}
-	_check_system();
 }
 
 //--- _check_system -----------------
 static void _check_system(void)
 {
-	_Status.voltages.voltage24V 			= adc_get_value(0, 30.0);
-	_Status.voltages.voltage12V 			= adc_get_value(1, 15.0);
-	_Status.voltages.voltage12VNuc 			= adc_get_value(2, 15.0);
-	_Status.voltages.voltage12VDisplay 		= adc_get_value(3, 15.0);
-	_Status.voltages.voltage5V 				= adc_get_value(4, 6.25);
-	_Status.voltages.voltage3V3 			= adc_get_value(5, 4.125);
-	_Status.voltages.voltagePcbRevision 	= adc_get_value(6, 4.125);
+	_Status.voltages.voltage24V 			= (INT8)(10*adc_get_value(0, 30.0));
+	_Status.voltages.voltage12V 			= (INT8)(10*adc_get_value(1, 15.0));
+	_Status.voltages.voltage12VNuc 			= (INT8)(10*adc_get_value(2, 15.0));
+	_Status.voltages.voltage12VDisplay 		= (INT8)(10*adc_get_value(3, 15.0));
+	_Status.voltages.voltage5V 				= (INT8)(10*adc_get_value(4, 6.25));
+	_Status.voltages.voltage3V3 			= (INT8)(10*adc_get_value(5, 4.125));
+	_Status.voltages.voltagePcbRevision 	= (INT8)(10*adc_get_value(6, 4.125));
 	_Status.pcbRevision 					= adc_get_revision(_Status.voltages.voltagePcbRevision);
-	_Status.boardTemperature 				= adc_get_temp();
+	_Status.boardTemperature 				= (INT8)(10*adc_get_temp());
 
 	// Update DIP Switch inputs
 	_Status.dipSwitch						= gpio_get_dipswitches();
@@ -171,8 +172,9 @@ static void _check_system(void)
 	enc_get_status(&_Status.enc);
 
 	// Update Power Status
-	_Status.nucPower 		= HAL_GPIO_ReadPin(NUC_PWR_EN_GPIO_Port, NUC_PWR_EN_Pin);
-	_Status.displayPower 	= HAL_GPIO_ReadPin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin);
+	_Status.flags=0;
+	if (HAL_GPIO_ReadPin(NUC_PWR_EN_GPIO_Port, NUC_PWR_EN_Pin)) _Status.flags |= FLAG_nucPower;
+	if (HAL_GPIO_ReadPin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin)) _Status.flags |= FLAG_displayPower;
 }
 
 //--- box_handle_ferag_char -----------------------------
@@ -204,20 +206,26 @@ static void _handle_feragMsg(void)
 		{
 		case 1:	idx=(_TrackInIdx+1)% TRACKING_CNT;
 				if (idx==_TrackOutIdx)
-					printf("ERROR: Tracking overflow\n");
+				{
+					if (!_TrackingError)
+					 printf("ERROR: Tracking overflow\n");
+					_TrackingError= TRUE;
+				}
 				else
 				{
 					memcpy(&_Tracking[idx].prod, &_FeragMsg,  sizeof(_Tracking[idx].prod));
 					_Tracking[idx].delay = _PrintGoDelay;
 					_TrackInIdx=idx;
-					if (_FeragMsg.info&1) printf("ProductDetect %d: PaceId=%d, \n", _Status.dtCnt, _FeragMsg.paceId);
-					else printf("ProductDetect %d: PaceId=%d (EMPTY)\n", _Status.dtCnt, _FeragMsg.paceId);
+				//	if (_FeragMsg.info&1) printf("ProductDetect %d: PaceId=%d, \n", _Status.dtCnt, _FeragMsg.paceId);
+				//	else printf("ProductDetect %d: PaceId=%d (EMPTY)\n", _Status.dtCnt, _FeragMsg.paceId);
 					_Status.dtCnt++;
 				}
 				break;
 
-		case 2:		printf("Alive\n"); break;
-		default: 	printf("Unknown Message Type=%d\n", _FeragMsg.type); break;
+		case 2:		// printf("Alive\n");
+					_Status.aliveCnt++; break;
+		default: 	printf("Unknown Message Type=%d\n", _FeragMsg.type);
+					break;
 		}
 		_Status.feragMsgOutCnt++;
 		_FeragMsgOut++;
@@ -227,7 +235,7 @@ static void _handle_feragMsg(void)
 //--- _handle_encoder -------------------------------------
 static void _handle_encoder(void)
 {
-	if (_EncoderPos!=_Status.enc.encOutPos)
+	if (_EncoderPos!=EZ_EncoderOutPos)
 	{
 		_EncoderPos++;
 	//	if (_EncoderPos%1000==0)
@@ -241,6 +249,12 @@ static void _handle_encoder(void)
 				box_printGo();
 			}
 		}
+		if (_PrintGoOffDelay>0)
+		{
+			if ((--_PrintGoOffDelay)==0)
+				HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
+		}
+
 		if (_PrintDoneDelay>0)
 		{
 			if ((--_PrintDoneDelay)==0)
@@ -278,8 +292,16 @@ static void _check_printer_ready(void)
 //--- _send_print_done ----------------------------------------
 static void _send_print_done(void)
 {
-	printf("PrintDone %d: PaceId[%d]=%d, ok=%d\n", _Status.pdCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId, _Tracking[_TrackOutIdx].prod.info);
-	_Status.pdCnt++;
+	if (enc_fixSpeed() || _Tracking[_TrackOutIdx].prod.info&0x01)
+	{
+		printf("PrintDone %d: PaceId[%d]=%d, ok=%d\n", _Status.pdCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId, _Tracking[_TrackOutIdx].prod.info);
+		_Status.pdCnt++;
+	}
+	else
+	{
+		printf("EmptyDone %d: PaceId[%d]=%d, ok=%d\n", _Status.emptyDoneCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId, _Tracking[_TrackOutIdx].prod.info);
+		_Status.emptyDoneCnt++;
+	}
 	_PaceId = -1;
 }
 
@@ -288,16 +310,21 @@ void box_printGo(void)
 {
 //	printf("PrintGo ON %d\n",  _Ticks);
 	_Status.paceId = _Tracking[_TrackOutIdx].prod.paceId;
-	printf("PrintGo %d: PaceId[%d]=%d\n", _Status.pgCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId);
-	_Status.pgCnt++;
 	_PaceId = _Tracking[_TrackOutIdx].prod.paceId;
 	if (enc_fixSpeed() || _Tracking[_TrackOutIdx].prod.info&0x01)
 	{
+		printf("PrintGo %d: PaceId[%d]=%d\n", _Status.pgCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId);
+		_Status.pgCnt++;
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_SET);
 	}
-	_TicksPgOff = _Ticks+2;
+	else
+	{
+		printf("EmptyGo %d: PaceId[%d]=%d\n", _Status.pgCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId);
+		_Status.emptyGoCnt++;
+	}
 	if (_PrintDoneDelay) printf("ERROR: PringGo while still printing _PrintDoneDelay=%d\n",_PrintDoneDelay);
-	_PrintDoneDelay = 2000;
+	_PrintGoOffDelay = 10;
+	_PrintDoneDelay = 20;
 }
 
 //--- box_send_status ----------------------------------------
@@ -338,6 +365,22 @@ void box_send_status(void)
 	 */
 	char msg[512];
 	_Status.test++;
+	/*
+	int len = sprintf(msg, "STATUS ");
+	bin2hex(&msg[len], &_Status, sizeof(_Status));
+	len += strlen(&msg[len]);
+	msg[len++]='\n';
+	msg[len]=0;
+	int l=64;
+	for(int start=0; start<len; start+=l)
+	{
+		char ch=msg[start+l];
+		msg[start+l]=0;
+		printf(&msg[start]);
+		msg[start+l]=ch;
+		start+=l;
+	}
+	*/
 	printf("STATUS %s\n", bin2hex(msg, &_Status, sizeof(_Status)));
 	fflush(stdout);
 }

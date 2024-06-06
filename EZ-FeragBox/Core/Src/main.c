@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -27,7 +26,6 @@
 #include "enc.h"
 #include "box.h"
 #include "term.h"
-#include "usbd_cdc_if.h"
 
 #include "AD5593.h"
 
@@ -57,8 +55,8 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim5;
 
-UART_HandleTypeDef huart1;	// Debugging
-UART_HandleTypeDef huart3;	// NUC
+UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 volatile uint8_t RxDataNUC;
@@ -72,9 +70,6 @@ static int _NUC_InIdx=0;
 static int _NUC_StartIdx=0;
 static int _NUC_Busy=0;
 static int _powerDisplay=12000;
-
-// USB CDC handle
-extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE END PV */
 
@@ -91,7 +86,7 @@ static void MX_USART1_UART_Init(void);
 
 #define WRITE_PROTOTYPE int _write(int file, char *ptr, int len)
 
-void powerCommand(const char* args);
+// void powerCommand(const char* args);
 
 static void _tick_10ms(int ticks);
 
@@ -131,7 +126,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART3_UART_Init();
-  MX_USB_DEVICE_Init();
   MX_TIM3_Init();
   MX_I2C1_Init();
   MX_TIM2_Init();
@@ -220,12 +214,11 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_USART1
-                              |RCC_PERIPHCLK_USART3|RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_USART3
+                              |RCC_PERIPHCLK_I2C1;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
   PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
   PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
-  PeriphClkInit.USBClockSelection = RCC_USBCLKSOURCE_PLL_DIV1_5;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -292,8 +285,8 @@ static void MX_TIM2_Init(void)
 //	PWM for encoder output
   /* USER CODE END TIM2_Init 0 */
 
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM2_Init 1 */
 
@@ -304,7 +297,12 @@ static void MX_TIM2_Init(void)
   htim2.Init.Period = 4294967295;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
   {
     Error_Handler();
   }
@@ -314,22 +312,9 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
-  HAL_TIM_MspPostInit(&htim2);
 
 }
 
@@ -527,6 +512,12 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOF, NUC_PWR_EN_Pin|DISPLAY_PWR_EN_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(ENCODER_A_GPIO_Port, ENCODER_A_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(ENCODER_B_GPIO_Port, ENCODER_B_Pin, GPIO_PIN_SET);
+
   /*Configure GPIO pins : DIP_5_Pin DIP_4_Pin DIP_3_Pin DIP_2_Pin
                            DIP_1_Pin DIP_0_Pin */
   GPIO_InitStruct.Pin = DIP_5_Pin|DIP_4_Pin|DIP_3_Pin|DIP_2_Pin
@@ -555,6 +546,20 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : ENCODER_A_Pin */
+  GPIO_InitStruct.Pin = ENCODER_A_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(ENCODER_A_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : ENCODER_B_Pin */
+  GPIO_InitStruct.Pin = ENCODER_B_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(ENCODER_B_GPIO_Port, &GPIO_InitStruct);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -564,6 +569,7 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim==&htim3) enc_in_irq(htim);
+	else if (htim==&htim2) HAL_TIM_QUARTER_PulseFinishedCallback(htim);
 }
 
 //--- enc_get_pos -------------------------------------
@@ -683,26 +689,6 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 //--- WRITE_PROTOTYPE ----------------------------------------------------
 // Retarget stdout to UART and CDC
 WRITE_PROTOTYPE {
-    /*
-    int DataIdx;
-    for (DataIdx = 0; DataIdx < len; DataIdx++) {
-        // Transmit over USART3
-        HAL_UART_Transmit(&huart3, (uint8_t*)&ptr[DataIdx], 1, HAL_MAX_DELAY);
-    }
-
-    // Check if USB CDC is connected before trying to transmit
-    if (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED) {
-        uint32_t startTick = HAL_GetTick();
-        for (DataIdx = 0; DataIdx < len; DataIdx++) {
-            // Attempt to transmit over CDC, with timeout
-            while (CDC_Transmit_FS((uint8_t*)&ptr[DataIdx], 1) == USBD_BUSY) {
-                if (HAL_GetTick() - startTick > CDC_TRANSMIT_TIMEOUT_MS) {
-                    break; // Exit if timeout is reached
-                }
-            }
-        }
-    }
-	*/
 	int idx = (_NUC_InIdx+1) % NUC_FIFO_CNT;
 	__disable_irq();
 	TxDataLenNuc[_NUC_InIdx] = len;
