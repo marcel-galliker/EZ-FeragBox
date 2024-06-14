@@ -37,6 +37,8 @@ void term_idle(void)
     	else if ((args=strstart(_Input, "stop"))) 		box_stop();
     	else if ((args=strstart(_Input, "pgDelay"))) 	box_set_pgDelay(atoi(args));
     	else if ((args=strstart(_Input, "pg"))) 		box_printGo();
+    	else if ((args=strstart(_Input, "h"))) 			box_test(TRUE);
+    	else if ((args=strstart(_Input, "l"))) 			box_test(FALSE);
 
     	memset(_Input, 0, sizeof(_Input));
     	_InputLen=0;

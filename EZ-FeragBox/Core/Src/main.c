@@ -46,7 +46,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 // htim2: Encoder out clock
-// htim3:
+// htim3: Timer for encoder-in frequency measurement (10000 ticks/sec)
 // htim5: Encoder counter
 /* USER CODE END PM */
 

@@ -12,6 +12,7 @@
 #include "stm32f3xx_hal.h"
 #include "EzFeragBox_def.h"
 
+extern int 	 	  EZ_EncoderInPos;
 extern int 	 	  EZ_EncoderOutPos;
 
 void enc_command(const char *args);

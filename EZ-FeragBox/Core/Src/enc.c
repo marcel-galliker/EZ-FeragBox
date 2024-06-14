@@ -18,14 +18,14 @@ static uint32_t _Timer_clock_frequency;
 static uint32_t _Prescaler;
 
 static SEZFB_EncStatus _EncStatus;
-static int _EncoderInPos;
 
 static int   _Init=FALSE;
 static int	 _Running=FALSE;
+static int	 _TimerRunning=FALSE;
 static float _EncIn_incPM  = 10240;	// impulese/ m
 static float _EncOut_incPM = 128 * 1000.0 / 25.4; 	// impulese/ m (128 DPI)
 static INT32 _EncInTime=0;
-static int 	 _EncoderInPos;
+int 	 	  EZ_EncoderInPos;
 int 	 	  EZ_EncoderOutPos;
 static INT32 _SpeedOutSet;
 static INT32 _SpeedOutChange;
@@ -40,25 +40,29 @@ void enc_init(void)
 {
 	_Timer_clock_frequency = HAL_RCC_GetPCLK1Freq(); // Adjust based on your clock tree settings
 	_Prescaler=1;
-	_EncoderInPos = 0;
+	EZ_EncoderInPos = 0;
 }
+
+static int test=0;
 
 //--- enc_irq ------------------------
 void enc_in_irq(TIM_HandleTypeDef *htim)
 {
 	int time=HAL_GetTick();
-	int pos = _EncoderInPos;
-	_EncoderInPos = enc_get_pos();
-	int dist=_EncoderInPos-pos;
+	int pos = EZ_EncoderInPos;
+	EZ_EncoderInPos = enc_get_pos();
+	int dist=EZ_EncoderInPos-pos;
 	int t=time-_EncInTime;
 	if (t==0) _EncStatus.encInSpeed=0;
-	else _EncStatus.encInSpeed = (dist*1000)/t;
+	else
+		_EncStatus.encInSpeed = (dist*1000)/t;
 
 	_EncInTime=time;
 
 	//--- set output speed ------
-	if (_Running && !_FixedSpeed)
-		enc_set_speed((int)(_EncStatus.encInSpeed*_EncOut_incPM/_EncIn_incPM));
+	int speed = (int)(_EncStatus.encInSpeed*_EncOut_incPM/_EncIn_incPM/2);
+	if (!_FixedSpeed)
+		enc_set_speed(speed);
 }
 
 //--- enc_tick_10ms ---------------------------
@@ -96,7 +100,7 @@ void enc_command(const char *args)
   //  else
     if ((cnt=sscanf(args, "speed %d", &_FixedSpeed)))
     {
-    	printf("LOG: enc_command speed=%d Hz\n", _FixedSpeed);
+    //	printf("LOG: enc_command speed=%d Hz\n", _FixedSpeed);
     	enc_set_speed(_FixedSpeed);
     }
     else
@@ -114,8 +118,10 @@ void enc_set_speed(int32_t speed)
 	{
 		_SpeedOutSet = speed;
 		_SpeedOutChange = TRUE;
-		printf("Encoder Speedchange=%d\n", speed);
+	//	printf("Encoder Speedchange=%d\n", speed);
+		if (!_TimerRunning) _set_speed(speed);
 	}
+	_Init=TRUE;
 }
 
 //--- enc_fixSpeed ----------------------------
@@ -129,23 +135,23 @@ static void _set_speed(int32_t speed)
 {
 	if (htim2.Instance)
 	{
+		printf("_set_speed(%d)\n", speed);
 		if (speed==0)
 		{
-			printf("LOG: encoder HAL_TIM_Base_Stop\n");
+		//	printf("LOG: encoder HAL_TIM_Base_Stop\n");
 			HAL_TIM_Base_Stop(&htim2);
-			_Running = FALSE;
+			_TimerRunning = FALSE;
 		}
 		else
 		{
 			uint32_t period = ((_Timer_clock_frequency / (_Prescaler * speed)) / 2) - 1;
 
-		//	TIM2->CNT = period;
 			TIM2->ARR = period;
 
-			if (!_Running)
+			if (!_TimerRunning)
 			{
-				_Running = TRUE;
-				printf("LOG: encoder HAL_TIM_Base_Start period=%d\n", period);
+				_TimerRunning = TRUE;
+			//	printf("LOG: encoder HAL_TIM_Base_Start period=%d\n", period);
 				if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK) {
 					Error_Handler();
 				}
@@ -175,9 +181,10 @@ void enc_out_irq(TIM_HandleTypeDef *htim)
 //--- enc_start ---------------------------
 void enc_start(void)
 {
-	if (_FixedSpeed) printf("WARN: Encoder speed fixed to %d Hz\n", _FixedSpeed);
+//	if (_FixedSpeed) printf("WARN: Encoder speed fixed to %d Hz\n", _FixedSpeed);
 
     // Apply the last configured settings and start PWM
+	_Running = TRUE;
 	EZ_EncoderOutPos=0;
 }
 
@@ -191,4 +198,5 @@ void enc_stop(void) {
 		HAL_GPIO_WritePin(ENCODER_A_GPIO_Port, ENCODER_A_Pin, GPIO_PIN_SET);
 		HAL_GPIO_WritePin(ENCODER_B_GPIO_Port, ENCODER_A_Pin, GPIO_PIN_SET);
 	}
+	_Running = FALSE;
 }
