@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value="_PrintDoneIn"/>
+		<item key="selection" value="HAL_UART_Receive_IT"/>
 		<item key="wrap" value="false"/>
 		<item key="casesensitive" value="false"/>
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
+			<item value="power_display"/>
+			<item value="RESET_BX_GPIO_Port"/>
+			<item value="HAL_UART_Receive_IT"/>
+			<item value="RESET_BX"/>
+			<item value="NUC_PWR_EN"/>
+			<item value="test"/>
 			<item value="_PrintDoneIn"/>
 			<item value="_PrintDoneDelay"/>
 			<item value="_check_print_done"/>
 			<item value="Check"/>
-			<item value="check"/>
-			<item value="_PrintGoOffDelay"/>
-			<item value="speed"/>
-			<item value="_SpeedOutChange"/>
 		</list>
 		<list key="replacehistory">
 			<item value="huart3"/>

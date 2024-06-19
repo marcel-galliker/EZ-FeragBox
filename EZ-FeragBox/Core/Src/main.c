@@ -145,9 +145,6 @@ int main(void)
   enc_init();
   box_init();
 
-  power_nuc(TRUE);
-//  power_display(TRUE);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -168,7 +165,7 @@ int main(void)
 			if (_powerDisplay && _ticks>_powerDisplay)
 			{
 				_powerDisplay=0;
-				power_display(TRUE);
+				HAL_GPIO_WritePin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin, GPIO_PIN_SET);
 			}
 		}
 		box_idle();
@@ -340,7 +337,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 7200;
   htim3.Init.CounterMode = TIM_COUNTERMODE_DOWN;
-  htim3.Init.Period = 10000;
+  htim3.Init.Period = 1000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -511,7 +508,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, NUC_PWR_EN_Pin|DISPLAY_PWR_EN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOF, RESET_BX_Pin|DISPLAY_PWR_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(ENCODER_A_GPIO_Port, ENCODER_A_Pin, GPIO_PIN_SET);
@@ -540,8 +537,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(PRINT_DONE_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : NUC_PWR_EN_Pin DISPLAY_PWR_EN_Pin */
-  GPIO_InitStruct.Pin = NUC_PWR_EN_Pin|DISPLAY_PWR_EN_Pin;
+  /*Configure GPIO pins : RESET_BX_Pin DISPLAY_PWR_EN_Pin */
+  GPIO_InitStruct.Pin = RESET_BX_Pin|DISPLAY_PWR_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -652,20 +649,7 @@ uint8_t gpio_get_dipswitches(void)
     return dipswitches;
 }
 
-//--- power_nuc -----------------------------
-void    power_nuc(int on)
-{
-	if (on) HAL_GPIO_WritePin(NUC_PWR_EN_GPIO_Port, NUC_PWR_EN_Pin, GPIO_PIN_SET);
-	else 	HAL_GPIO_WritePin(NUC_PWR_EN_GPIO_Port, NUC_PWR_EN_Pin, GPIO_PIN_RESET);
-}
-
-//--- power_display -------------------------
-void    power_display(int on)
-{
-	if (on) HAL_GPIO_WritePin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin, GPIO_PIN_SET);
-	else 	HAL_GPIO_WritePin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin, GPIO_PIN_RESET);
-}
-
+//--- _nuc_send_next -------------------------------------
 void _nuc_send_next()
 {
 	if (_NUC_InIdx!=_NUC_StartIdx && !_NUC_Busy)
@@ -699,14 +683,6 @@ WRITE_PROTOTYPE {
 
 	_nuc_send_next();
 
-	/*
-	int time=HAL_GetTick();
-    HAL_UART_Transmit_IT(&huart3, ptr, len); // NUC
-  //  HAL_UART_Transmit_IT(&huart1, ptr, len); // debugging
-    time=HAL_GetTick()-time;
-    if (time>0)
-    	printf("WARN: UART send time=%d\n", time);
-    	*/
     return len; // Return the number of characters written
 }
 

@@ -20,6 +20,6 @@ void box_stop(void);
 
 void box_printGo(void);
 
-
+void box_reset_bx(void);
 
 #endif /* INC_BOX_H_ */

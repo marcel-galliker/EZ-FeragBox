@@ -61,6 +61,7 @@ void enc_in_irq(TIM_HandleTypeDef *htim)
 
 	//--- set output speed ------
 	int speed = (int)(_EncStatus.encInSpeed*_EncOut_incPM/_EncIn_incPM/2);
+//	printf("encoderIn: speed=%d, FixedSpeed=%d, TimerRunning=%d\n", speed, _FixedSpeed, _TimerRunning);
 	if (!_FixedSpeed)
 		enc_set_speed(speed);
 }
@@ -95,10 +96,9 @@ void enc_command(const char *args)
     int cnt=0;
 
    // Parse the command arguments for action type
-  //  if (strstr(args, "start")) 		enc_start();
-  //  else if (strstr(args, "stop"))	enc_stop();
-  //  else
-    if ((cnt=sscanf(args, "speed %d", &_FixedSpeed)))
+    if (strstr(args, "start")) 		enc_start();
+    else if (strstr(args, "stop"))	enc_stop();
+    else if ((cnt=sscanf(args, "speed %d", &_FixedSpeed)))
     {
     //	printf("LOG: enc_command speed=%d Hz\n", _FixedSpeed);
     	enc_set_speed(_FixedSpeed);
@@ -135,7 +135,7 @@ static void _set_speed(int32_t speed)
 {
 	if (htim2.Instance)
 	{
-		printf("_set_speed(%d)\n", speed);
+	//	printf("_set_speed(%d)\n", speed);
 		if (speed==0)
 		{
 		//	printf("LOG: encoder HAL_TIM_Base_Stop\n");
@@ -144,7 +144,7 @@ static void _set_speed(int32_t speed)
 		}
 		else
 		{
-			uint32_t period = ((_Timer_clock_frequency / (_Prescaler * speed)) / 2) - 1;
+			uint32_t period = ((_Timer_clock_frequency / (_Prescaler * speed)) / 1) - 1;
 
 			TIM2->ARR = period;
 

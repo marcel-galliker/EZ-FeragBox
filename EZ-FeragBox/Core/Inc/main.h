@@ -59,7 +59,6 @@ float 	adc_get_temp(void);
 uint8_t gpio_get_dipswitches(void);
 int32_t	enc_get_pos(void);
 void    power_nuc(int on);
-void    power_display(int on);
 
 void	ferag_send_char(char data);
 
@@ -86,8 +85,8 @@ void	ferag_send_char(char data);
 #define RS422_COM_TX_GPIO_Port GPIOA
 #define RS422_COM_RX_Pin GPIO_PIN_10
 #define RS422_COM_RX_GPIO_Port GPIOA
-#define NUC_PWR_EN_Pin GPIO_PIN_6
-#define NUC_PWR_EN_GPIO_Port GPIOF
+#define RESET_BX_Pin GPIO_PIN_6
+#define RESET_BX_GPIO_Port GPIOF
 #define DISPLAY_PWR_EN_Pin GPIO_PIN_7
 #define DISPLAY_PWR_EN_GPIO_Port GPIOF
 #define ENCODER_A_Pin GPIO_PIN_15
