@@ -144,7 +144,7 @@ static void _set_speed(int32_t speed)
 		}
 		else
 		{
-			uint32_t period = ((_Timer_clock_frequency / (_Prescaler * speed)) / 1) - 1;
+			uint32_t period = (((_Timer_clock_frequency*2) / (_Prescaler * speed)) / 1) - 1;
 
 			TIM2->ARR = period;
 

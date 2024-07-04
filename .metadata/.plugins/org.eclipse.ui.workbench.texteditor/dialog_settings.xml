@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value="HAL_UART_Receive_IT"/>
+		<item key="selection" value="empty"/>
 		<item key="wrap" value="false"/>
 		<item key="casesensitive" value="false"/>
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
+			<item value="empty"/>
+			<item value="_EncoderPos"/>
+			<item value="_PrintDoneDelay"/>
+			<item value="tcp_status"/>
+			<item value="tcpstatus"/>
 			<item value="power_display"/>
 			<item value="RESET_BX_GPIO_Port"/>
 			<item value="HAL_UART_Receive_IT"/>
 			<item value="RESET_BX"/>
-			<item value="NUC_PWR_EN"/>
-			<item value="test"/>
-			<item value="_PrintDoneIn"/>
-			<item value="_PrintDoneDelay"/>
-			<item value="_check_print_done"/>
-			<item value="Check"/>
 		</list>
 		<list key="replacehistory">
 			<item value="huart3"/>
@@ -30,9 +29,9 @@
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
 		<item key="DIALOG_X_ORIGIN" value="1596"/>
 		<item key="DIALOG_Y_ORIGIN" value="185"/>
-		<item key="DIALOG_WIDTH" value="322"/>
-		<item key="DIALOG_HEIGHT" value="391"/>
-		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>
+		<item key="DIALOG_WIDTH" value="414"/>
+		<item key="DIALOG_HEIGHT" value="454"/>
+		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-15|0|0|0|400|0|0|0|1|0|0|5|0|Segoe UI"/>
 	</section>
 	<section name="org.eclipse.ui.texteditor.GotoLineAction$GotoLineDialog_dialogBounds">
 		<item key="DIALOG_X_ORIGIN" value="564"/>
