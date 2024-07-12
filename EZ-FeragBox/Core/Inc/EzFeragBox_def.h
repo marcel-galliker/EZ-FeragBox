@@ -41,12 +41,9 @@ typedef struct
 
 typedef struct
 {
-	UINT8 		flags;
-	#define FLAG_displayPower		0x01
-	#define FLAG_tcp_connected		0x02
-	#define FLAG_encoder_running	0x04
-
+	UINT8 			tcp_connected;	
 	UINT8			tcp_status;
+	INT32			tcp_dataCnt;
 
 	UINT8 			dipSwitch;
 	UINT8 			boardTemperature;

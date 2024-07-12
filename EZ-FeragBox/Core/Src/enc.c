@@ -5,9 +5,10 @@
  *      Author: marcel@galliker-engineering.ch
  */
 // Encoder Output: TIM2
+//	https://community.st.com/t5/stm32-mcus-products/quadrature-output-stm32f407/td-p/504824
 //
 // Encoder Input: TIM5
-// https://www.steppeschool.com/pages/blog/stm32-timer-encoder-mode
+// 	https://www.steppeschool.com/pages/blog/stm32-timer-encoder-mode
 
 #include "ge_common.h"
 #include "EzFeragBox_def.h"
