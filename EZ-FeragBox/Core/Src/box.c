@@ -255,10 +255,10 @@ static void _handle_feragMsg(void)
 					//	else printf("ProductDetect %d: PaceId=%d (EMPTY, encIn=%d, encOut=%d, delay=%d, pos=%d, dist=%d)\n", _Status.dtCnt, _FeragMsg.paceId, enc_get_pos(), _EncoderPos, _PrintGoDelay, _EncoderPos+_PrintGoDelay, dist);
 						if (_FeragMsg.info&1)
 						{
-							printf("ProductDetect %d: PaceId=%d, dist=%d\n", _Status.dtCnt, _FeragMsg.paceId, dist);
+							printf("DT%d: PaceId=%d, dist=%d\n", _Status.dtCnt, _FeragMsg.paceId, dist);
 							_ProdDtCnt++;
 						}
-						else printf("ProductDetect %d: PaceId=%d (EMPTY) dist=%d)\n", _Status.dtCnt, _FeragMsg.paceId, dist);
+						else printf("DT%d: PaceId=%d (EMPTY) dist=%d)\n", _Status.dtCnt, _FeragMsg.paceId, dist);
 						_Status.dtCnt++;
 					}
 					break;
@@ -336,12 +336,12 @@ static void _send_print_done(void)
 {
 	if (enc_fixSpeed() || _Tracking[_TrackOutIdx].prod.info&0x01)
 	{
-		printf("PrintDone %d: PaceId[%d]=%d\n", _Status.pdCnt+_Status.emptyDoneCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId);
+		printf("PD%d: PaceId[%d]=%d\n", _Status.pdCnt+_Status.emptyDoneCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId);
 		_Status.pdCnt++;
 	}
 	else
 	{
-		printf("EmptyDone %d: PaceId[%d]=%d\n", _Status.pdCnt+_Status.emptyDoneCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId);
+		printf("ED%d: PaceId[%d]=%d\n", _Status.pdCnt+_Status.emptyDoneCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId);
 		_Status.emptyDoneCnt++;
 	}
 	_PaceId = -1;
@@ -358,13 +358,13 @@ void box_printGo(void)
 	lastpos=_EncoderPos;
 	if (enc_fixSpeed() || _Tracking[_TrackOutIdx].prod.info&0x01)
 	{
-		printf("PrintGo %d: PaceId[%d]=%d, dist=%d, prodDt=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId, dist, _ProdDtCnt);
+		printf("PG%d: PaceId[%d]=%d, dist=%d, prodDt=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId, dist, _ProdDtCnt);
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_SET);
 		_Status.pgCnt++;
 	}
 	else
 	{
-		printf("EmptyGo %d: PaceId[%d]=%d, dist=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId, dist);
+		printf("EG%d: PaceId[%d]=%d, dist=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackOutIdx, _Tracking[_TrackOutIdx].prod.paceId, dist);
 		_Status.emptyGoCnt++;
 	}
 	if (_PrintDoneDelay)
