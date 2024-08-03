@@ -248,6 +248,13 @@ static void _handle_feragMsg(void)
 					{
 						memcpy(&_Tracking[idx].prod, &_FeragMsg,  sizeof(_Tracking[idx].prod));
 						_Tracking[idx].delay = _PrintGoDelay;
+						/*// TEST overlap printing
+						if (idx==5)
+						{
+							_Tracking[idx].delay+=200;
+							printf("Delay TEST\n");
+						}
+						*/
 						_TrackInIdx=idx;
 						int dist = _EncoderPos - _LastPDPos;
 						_LastPDPos = _EncoderPos;
@@ -255,7 +262,7 @@ static void _handle_feragMsg(void)
 					//	else printf("ProductDetect %d: PaceId=%d (EMPTY, encIn=%d, encOut=%d, delay=%d, pos=%d, dist=%d)\n", _Status.dtCnt, _FeragMsg.paceId, enc_get_pos(), _EncoderPos, _PrintGoDelay, _EncoderPos+_PrintGoDelay, dist);
 						if (_FeragMsg.info&1)
 						{
-							printf("DT%d: PaceId=%d, dist=%d\n", _Status.dtCnt, _FeragMsg.paceId, dist);
+							printf("DT%d: PaceId=%d, dist=%d, speedIn=%d\n", _Status.dtCnt, _FeragMsg.paceId, dist, _Status.enc.encInSpeed);
 							_ProdDtCnt++;
 						}
 						else printf("DT%d: PaceId=%d (EMPTY) dist=%d)\n", _Status.dtCnt, _FeragMsg.paceId, dist);
