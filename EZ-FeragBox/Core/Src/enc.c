@@ -13,6 +13,7 @@
 #include "ge_common.h"
 #include "EzFeragBox_def.h"
 #include "main.h"
+#include "box.h"
 #include "enc.h"
 
 static uint32_t _Timer_clock_frequency;
@@ -177,27 +178,27 @@ void enc_out_irq(TIM_HandleTypeDef *htim)
   if (_SpeedOutChange)
 	  _set_speed(_SpeedOutSet);
   _SpeedOutChange = FALSE;
+  box_handle_encoder();
 }
 
 //--- enc_start ---------------------------
 void enc_start(void)
 {
-//	if (_FixedSpeed) printf("WARN: Encoder speed fixed to %d Hz\n", _FixedSpeed);
-
-    // Apply the last configured settings and start PWM
 	_Running = TRUE;
 	EZ_EncoderOutPos=0;
+	ENCODER_A_GPIO_Port->BSRR  = ENCODER_A_Pin;
+	ENCODER_B_GPIO_Port->BSRR  = ENCODER_B_Pin;
+//	box_init();
 }
 
 //--- enc_stop ---------------------------------
 void enc_stop(void) {
-    // Stop the PWM and ensure both outputs are low
 	if (_Running)
 	{
 		_SpeedOutSet=0;
 		_SpeedOutChange=TRUE;
-		HAL_GPIO_WritePin(ENCODER_A_GPIO_Port, ENCODER_A_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(ENCODER_B_GPIO_Port, ENCODER_A_Pin, GPIO_PIN_SET);
+		ENCODER_A_GPIO_Port->BSRR  = ENCODER_A_Pin;
+		ENCODER_B_GPIO_Port->BSRR  = ENCODER_B_Pin;
 	}
 	_Running = FALSE;
 }

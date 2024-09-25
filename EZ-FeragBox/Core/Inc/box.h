@@ -13,8 +13,10 @@ void box_idle(void);
 void box_tick_10ms(int ticks);
 void box_send_status(void);
 void box_handle_ferag_char(char data);
+void box_handle_encoder(void);
 
 void box_set_pgDelay(int delay);
+void box_set_prodLen(int len);
 void box_start(void);
 void box_stop(void);
 
