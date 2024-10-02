@@ -163,6 +163,16 @@ static void _set_speed(int32_t speed)
 	}
 }
 
+void enc_aar(void)
+{
+	return TIM2->ARR;
+}
+
+void enc_cnt(void)
+{
+	return TIM2->CNT;
+}
+
 //--- enc_out_irq -------------------------------
 void enc_out_irq(TIM_HandleTypeDef *htim)
 {

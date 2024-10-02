@@ -244,7 +244,7 @@ static void _handle_feragMsg(void)
 						if (_Status.enc.encInSpeed==0)
 							printf("ERROR: Tracking overflow: encoder input missing?\n");
 						else
-							printf("ERROR: Tracking overflow encIn=%d, encOut=%d, inSpeed=%d, outSpeed=%d\n", EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed);
+							printf("ERROR: Tracking overflow encIn=%d, encOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, enc_aar(), enc_cnt());
 					}
 					_TrackingError= TRUE;
 				}
@@ -267,7 +267,7 @@ static void _handle_feragMsg(void)
 					_LastPDPos = _EncoderPos;
 					_Tracking[idx].delay = _PrintGoDelay+corr;
 					printf("Speed=%d, corr=%d\n", _Status.enc.encOutSpeed, corr);
-					printf("DT:%03d,%d dist=%d, EncIn=%d, EncOut=%d, inSpeed=%d, outSpeed=%d\n", _FeragMsg.paceId, _Tracking[idx].prod.info&1, dist, EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed);
+					printf("DT:%03d,%d dist=%d, EncIn=%d, EncOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", _FeragMsg.paceId, _Tracking[idx].prod.info&1, dist, EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, enc_aar(), enc_cnt());
 					_Status.dtCnt++;
 				}
 				break;
@@ -293,7 +293,7 @@ void box_handle_encoder(void)
 		{
 			_TrackIdx=i;
 			printf("PrintGo Pace[%03d], ok=%d\n", _Tracking[i].prod.paceId, _Tracking[i].prod.info);
-			if (_PrintDoneDelay /*|| _AwaitPrintDone*/) printf("ERROR: PrintGo while printing\n");
+			if (_PrintDoneDelay /*|| _AwaitPrintDone*/) printf("ERROR: PrintGo while printing, PrintDoneDelay=%d\n", _PrintDoneDelay);
 			box_printGo();
 		}
 	}
@@ -311,10 +311,11 @@ void box_handle_encoder(void)
 static void _check_print_done(void)
 {
 	int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
+	if (done!=_PrinterDoneIn) printf("print-done=%d at %d\n", done, _EncoderPos);
 	if (_PrinterDoneIn<0) _PrinterDoneIn=done;
 	if (done && !_PrinterDoneIn)
 	{
-		printf("print-done\n");
+		printf("PRINT-DONE at %d\n", _EncoderPos);
 		_AwaitPrintDone = FALSE;
 	//	_send_print_done();
 	}
@@ -346,11 +347,7 @@ void box_printGo(void)
 	lastpos=_EncoderPos;
 	if (enc_fixSpeed() || _Tracking[_TrackIdx].prod.info&0x01)
 	{
-		if (_PrintDoneDelay)
-		{
-			printf("ERROR: PringGo while still printing remaining _PrintDoneDelay=%d\n",_PrintDoneDelay);
-		}
-		printf("PG%d: PaceId[%d]=%d, dist=%d done=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist, _PrinterDoneIn);
+		printf("PG%d: PaceId[%d]=%d, dist=%d, pos=%d, print-done=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist, _EncoderPos, _PrinterDoneIn);
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_SET);
 		_PrintGoOffDelay = 10;
 		_AwaitPrintDone = TRUE;

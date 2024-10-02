@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value="while printing"/>
+		<item key="selection" value="_PrinterDoneIn"/>
 		<item key="wrap" value="false"/>
 		<item key="casesensitive" value="false"/>
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
+			<item value="_PrinterDoneIn"/>
+			<item value="printdone"/>
+			<item value="overflow"/>
 			<item value="while printing"/>
+			<item value="still printing"/>
+			<item value="PrintGo while still printing"/>
+			<item value="PrintGo while printing"/>
 			<item value="_AwaitPrintDone"/>
 			<item value="&quot;ERR"/>
 			<item value="_PrintDoneDelay"/>
-			<item value="_PrinterDoneIn"/>
 			<item value="_send_print_done"/>
 			<item value="delay"/>
 			<item value="_PrinterReadyIn"/>
