@@ -95,6 +95,7 @@ void box_init(void)
 void box_set_pgDelay(int delay)
 {
 	_PrintGoDelay = delay;
+	printf("pgDelay=%d\n", _PrintGoDelay);
 }
 
 //--- box_set_prodLen ------------------------------------
@@ -237,7 +238,11 @@ static void _handle_feragMsg(void)
 	{
 		switch (_FeragMsg.type)
 		{
-		case 1:	if (_Status.dtCnt-_Status.pdCnt-_Status.emptyDoneCnt>=TRACKING_CNT)
+		case 1:	if (!_Running)
+				{
+					printf("ProductDetect pace=%d, ok=%d while encoder off\n", _FeragMsg.paceId, _FeragMsg.info);
+				}
+				else if (_Status.dtCnt-_Status.pdCnt-_Status.emptyDoneCnt>=TRACKING_CNT)
 				{
 					if (!_TrackingError)
 					{
@@ -311,14 +316,13 @@ void box_handle_encoder(void)
 static void _check_print_done(void)
 {
 	int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
-	if (done!=_PrinterDoneIn) printf("print-done=%d at %d\n", done, _EncoderPos);
 	if (_PrinterDoneIn<0) _PrinterDoneIn=done;
-	if (done && !_PrinterDoneIn)
+	if (_PrinterDoneIn && !done)
 	{
-		printf("PRINT-DONE at %d\n", _EncoderPos);
+		// beginning of label
 		_AwaitPrintDone = FALSE;
-	//	_send_print_done();
 	}
+//	if (done!=_PrinterDoneIn) printf("print-done=%d at %d\n", done, _EncoderPos);
 	_PrinterDoneIn = done;
 }
 
@@ -347,7 +351,8 @@ void box_printGo(void)
 	lastpos=_EncoderPos;
 	if (enc_fixSpeed() || _Tracking[_TrackIdx].prod.info&0x01)
 	{
-		printf("PG%d: PaceId[%d]=%d, dist=%d, pos=%d, print-done=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist, _EncoderPos, _PrinterDoneIn);
+		if (_AwaitPrintDone) printf("ERROR: PRINT-DONE missing\n");
+		printf("PG%d: PaceId[%d]=%d, dist=%d, pos=%d, print-done=%d, _AwaitPrintDone=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist, _EncoderPos, _PrinterDoneIn, _AwaitPrintDone);
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_SET);
 		_PrintGoOffDelay = 10;
 		_AwaitPrintDone = TRUE;

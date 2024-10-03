@@ -1,28 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value="_PrinterDoneIn"/>
+		<item key="selection" value="overflow"/>
 		<item key="wrap" value="false"/>
 		<item key="casesensitive" value="false"/>
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
+			<item value="overflow"/>
+			<item value="stop"/>
+			<item value="delay"/>
+			<item value="_AwaitPrintDone"/>
+			<item value="_set_speed"/>
 			<item value="_PrinterDoneIn"/>
 			<item value="printdone"/>
-			<item value="overflow"/>
 			<item value="while printing"/>
 			<item value="still printing"/>
 			<item value="PrintGo while still printing"/>
-			<item value="PrintGo while printing"/>
-			<item value="_AwaitPrintDone"/>
-			<item value="&quot;ERR"/>
-			<item value="_PrintDoneDelay"/>
-			<item value="_send_print_done"/>
-			<item value="delay"/>
-			<item value="_PrinterReadyIn"/>
-			<item value="_check_printer_ready"/>
-			<item value="_check_print_done"/>
 		</list>
 		<list key="replacehistory">
 			<item value=""/>
@@ -38,7 +33,7 @@
 		<item key="DIALOG_Y_ORIGIN" value="185"/>
 		<item key="DIALOG_WIDTH" value="414"/>
 		<item key="DIALOG_HEIGHT" value="454"/>
-		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-15|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>
+		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-15|0|0|0|400|0|0|0|1|0|0|5|0|Segoe UI"/>
 	</section>
 	<section name="org.eclipse.ui.texteditor.GotoLineAction$GotoLineDialog_dialogBounds">
 		<item key="DIALOG_X_ORIGIN" value="564"/>

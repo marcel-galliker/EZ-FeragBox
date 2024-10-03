@@ -138,7 +138,7 @@ static void _set_speed(int32_t speed)
 	if (htim2.Instance)
 	{
 	//	printf("_set_speed(%d)\n", speed);
-		if (speed==0)
+		if (speed<10)
 		{
 		//	printf("LOG: encoder HAL_TIM_Base_Stop\n");
 			HAL_TIM_Base_Stop(&htim2);
