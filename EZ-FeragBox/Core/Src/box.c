@@ -83,7 +83,7 @@ void box_init(void)
 	_FeragMsgOut     = 0;
 	_TrackIdx 	 	 = 0;
 	_PrintDoneDelay  = 0;
-	_AwaitPrintDone  = 0;
+	_AwaitPrintDone  = FALSE;
 	_PrinterDoneIn   = -1;
 	_PaceCheck		 = -1;
 	_FeragCheck		 = -1;
@@ -95,6 +95,7 @@ void box_init(void)
 void box_set_pgDelay(int delay)
 {
 	_PrintGoDelay = delay;
+	_Status.pgDelay=delay;
 	printf("pgDelay=%d\n", _PrintGoDelay);
 }
 
@@ -102,6 +103,7 @@ void box_set_pgDelay(int delay)
 void box_set_prodLen(int len)
 {
 	_ProdLen = len;
+	_Status.prodLen = len;
 }
 
 //--- box_start -------------------------
@@ -298,13 +300,15 @@ void box_handle_encoder(void)
 		{
 			_TrackIdx=i;
 			printf("PrintGo Pace[%03d], ok=%d\n", _Tracking[i].prod.paceId, _Tracking[i].prod.info);
-			if (_PrintDoneDelay /*|| _AwaitPrintDone*/) printf("ERROR: PrintGo while printing, PrintDoneDelay=%d\n", _PrintDoneDelay);
+			if (_PrintDoneDelay) printf("ERROR: PrintGo while printing, PrintDoneDelay=%d\n", _PrintDoneDelay);
 			box_printGo();
 		}
 	}
 	if ((_PrintGoOffDelay>0) && (--_PrintGoOffDelay==0))
 	{
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
+		printf("PrintGo Off, _PrinterDoneIn=%d\n", _PrinterDoneIn);
+		if (_PrinterDoneIn) _AwaitPrintDone = FALSE;
 	}
 	if ((_PrintDoneDelay>0) && (--_PrintDoneDelay==0))
 	{
@@ -321,6 +325,7 @@ static void _check_print_done(void)
 	{
 		// beginning of label
 		_AwaitPrintDone = FALSE;
+		printf("PRINT-DONE\n");
 	}
 //	if (done!=_PrinterDoneIn) printf("print-done=%d at %d\n", done, _EncoderPos);
 	_PrinterDoneIn = done;
@@ -351,7 +356,7 @@ void box_printGo(void)
 	lastpos=_EncoderPos;
 	if (enc_fixSpeed() || _Tracking[_TrackIdx].prod.info&0x01)
 	{
-		if (_AwaitPrintDone) printf("ERROR: PRINT-DONE missing\n");
+		if (_AwaitPrintDone) printf("ERROR: PRINT-DONE missing, _PrinterDoneIn=%d\n", _PrinterDoneIn);
 		printf("PG%d: PaceId[%d]=%d, dist=%d, pos=%d, print-done=%d, _AwaitPrintDone=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist, _EncoderPos, _PrinterDoneIn, _AwaitPrintDone);
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_SET);
 		_PrintGoOffDelay = 10;

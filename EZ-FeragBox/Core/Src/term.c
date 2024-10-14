@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include "box.h"
 #include "enc.h"
 #include "term.h"
@@ -21,6 +22,18 @@ void term_init(void)
 	_CmdIn= _CmdOut = 0;
 	memset(_Input, 0, sizeof(_Input));
 }
+
+//--- term_printf --------------------------------------------
+void term_printf (const char *format, ...)
+{
+	char str[512];
+	va_list args;
+	va_start(args, format);
+	vsprintf(str, format, args);
+	va_end(args);
+//	to be continued
+}
+
 //--- term_handle_char -------------------------
 void term_handle_char(char ch)
 {

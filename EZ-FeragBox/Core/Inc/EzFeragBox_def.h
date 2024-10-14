@@ -55,6 +55,8 @@ typedef struct
 	INT32			test;
 	INT32			feragMsgInCnt;
 	INT32			feragMsgOutCnt;
+	INT32			pgDelay;
+	INT32			prodLen;
 	INT32			paceId;
 	INT32			dtCnt;
 	INT32			aliveCnt;

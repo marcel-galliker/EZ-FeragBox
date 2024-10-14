@@ -14,5 +14,6 @@ void term_init(void);
 
 void term_handle_char(char ch);
 void term_idle(void);
+void term_printf (const char *format, ...);
 
 #endif /* INC_TERM_H_ */
