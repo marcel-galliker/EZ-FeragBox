@@ -63,7 +63,7 @@ UART_HandleTypeDef huart3;
 /* USER CODE BEGIN PV */
 volatile uint8_t RxDataNUC;
 volatile uint8_t RxDataFERAG;
-#define NUC_FIFO_CNT 4
+#define NUC_FIFO_CNT 16
 #define NUC_FIFO_SIZE	512
 volatile uint8_t TxDataNuc[NUC_FIFO_CNT][NUC_FIFO_SIZE];
 volatile uint8_t TxDataLenNuc[NUC_FIFO_CNT];
@@ -652,16 +652,32 @@ uint8_t gpio_get_dipswitches(void)
 //--- _nuc_send_next -------------------------------------
 void _nuc_send_next()
 {
-	if (_NUC_InIdx!=_NUC_StartIdx && !_NUC_Busy)
+	if (TxDataLenNuc[_NUC_StartIdx] && !_NUC_Busy)
 	{
-		int time=HAL_GetTick();
+		__disable_irq();
 		_NUC_Busy = TRUE;
 		HAL_UART_Transmit_IT(&huart3, TxDataNuc[_NUC_StartIdx], TxDataLenNuc[_NUC_StartIdx]); // NUC
+		TxDataLenNuc[_NUC_StartIdx] = 0;
 		_NUC_StartIdx = (_NUC_StartIdx+1) % NUC_FIFO_CNT;
-	    time=HAL_GetTick()-time;
-	    if (time>1)
-	    	printf("WARN: UART send time=%d\n", time);
+		__enable_irq();
 	}
+}
+
+//--- nuc_get_buffer -------------------------------------
+int		nuc_get_buffer(int *pidx, char **buf)
+{
+	__disable_irq();
+	*pidx = _NUC_InIdx;
+	*buf = TxDataNuc[_NUC_InIdx];
+	_NUC_InIdx = (_NUC_InIdx+1) % NUC_FIFO_CNT;
+	__enable_irq();
+}
+
+//--- nuc_send_buffer -----------------------------------
+void nuc_send_buffer(int idx)
+{
+	TxDataLenNuc[idx]=strlen(TxDataNuc[idx]);
+	_nuc_send_next();
 }
 
 //--- HAL_UART_TxCpltCallback ---------------------------
@@ -674,6 +690,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 //--- WRITE_PROTOTYPE ----------------------------------------------------
 // Retarget stdout to UART and CDC
 WRITE_PROTOTYPE {
+	/*
 	int idx = (_NUC_InIdx+1) % NUC_FIFO_CNT;
 	__disable_irq();
 	TxDataLenNuc[_NUC_InIdx] = len;
@@ -682,8 +699,9 @@ WRITE_PROTOTYPE {
 	__enable_irq();
 
 	_nuc_send_next();
-
     return len; // Return the number of characters written
+    */
+	return 0;
 }
 
 /* USER CODE END 4 */
@@ -714,7 +732,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     ex: term_printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

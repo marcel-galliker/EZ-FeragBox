@@ -26,12 +26,14 @@ void term_init(void)
 //--- term_printf --------------------------------------------
 void term_printf (const char *format, ...)
 {
-	char str[512];
+	int idx;
+	char *buf;
+	nuc_get_buffer(&idx, &buf);
 	va_list args;
 	va_start(args, format);
-	vsprintf(str, format, args);
+	vsprintf(buf, format, args);
 	va_end(args);
-//	to be continued
+	nuc_send_buffer(idx);
 }
 
 //--- term_handle_char -------------------------
@@ -50,7 +52,7 @@ void term_handle_char(char ch)
 	}
 	else
 	{
-		printf("ERR: TERM fifo overflow\n");
+		term_printf("ERR: TERM fifo overflow\n");
 		_InputLen=0;
 	}
 }
@@ -72,6 +74,6 @@ void term_idle(void)
     	else if ((args=strstart(cmd, "prodLen"))) 	box_set_prodLen(atoi(args));
     	else if ((args=strstart(cmd, "pg"))) 		box_printGo();
     	else if ((args=strstart(cmd, "resetBX")))	box_reset_bx();
-    	else if (strlen(cmd)) printf("WARN: Unknown command >>%s<<\n", cmd);
+    	else if (strlen(cmd)) term_printf("WARN: Unknown command >>%s<<\n", cmd);
     }
 }
