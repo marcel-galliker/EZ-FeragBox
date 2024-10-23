@@ -163,12 +163,12 @@ static void _set_speed(int32_t speed)
 	}
 }
 
-void enc_aar(void)
+int enc_aar(void)
 {
 	return TIM2->ARR;
 }
 
-void enc_cnt(void)
+int enc_cnt(void)
 {
 	return TIM2->CNT;
 }
