@@ -60,8 +60,7 @@ uint8_t gpio_get_dipswitches(void);
 int32_t	enc_get_pos(void);
 void    power_nuc(int on);
 
-int		nuc_get_buffer(int *pidx, char **buf);
-void	nuc_send_buffer(int idx);
+void 	nuc_printf (const char *format, ...);
 void	ferag_send_char(char data);
 
 /* USER CODE END EFP */

@@ -63,7 +63,7 @@ void enc_in_irq(TIM_HandleTypeDef *htim)
 
 	//--- set output speed ------
 	int speed = (int)(_EncStatus.encInSpeed*_EncOut_incPM/_EncIn_incPM/2);
-//	term_printf("encoderIn: speed=%d, FixedSpeed=%d, TimerRunning=%d\n", speed, _FixedSpeed, _TimerRunning);
+//	nuc_printf("encoderIn: speed=%d, FixedSpeed=%d, TimerRunning=%d\n", speed, _FixedSpeed, _TimerRunning);
 	if (!_FixedSpeed)
 		enc_set_speed(speed);
 }
@@ -81,7 +81,7 @@ void enc_tick_10ms(int ticks)
 		{
 			_SpeedOutSet    += 1000;
 			_SpeedOutChange = TRUE;
-			term_printf("LOG: SetSpeed=%d Hz\n", _SpeedOutSet);
+			nuc_printf("LOG: SetSpeed=%d Hz\n", _SpeedOutSet);
 		}
 	}
 }
@@ -102,12 +102,12 @@ void enc_command(const char *args)
     else if (strstr(args, "stop"))	enc_stop();
     else if ((cnt=sscanf(args, "speed %d", &_FixedSpeed)))
     {
-    //	term_printf("LOG: enc_command speed=%d Hz\n", _FixedSpeed);
+    //	nuc_printf("LOG: enc_command speed=%d Hz\n", _FixedSpeed);
     	enc_set_speed(_FixedSpeed);
     }
     else
     {
-    	term_printf("Unknown command. Use 'encoder start', 'encoder stop', or 'encoder speed ...'\n");
+    	nuc_printf("Unknown command. Use 'encoder start', 'encoder stop', or 'encoder speed ...'\n");
     }
 }
 
@@ -120,7 +120,7 @@ void enc_set_speed(int32_t speed)
 	{
 		_SpeedOutSet = speed;
 		_SpeedOutChange = TRUE;
-	//	term_printf("Encoder Speedchange=%d\n", speed);
+	//	nuc_printf("Encoder Speedchange=%d\n", speed);
 		if (!_TimerRunning) _set_speed(speed);
 	}
 	_Init=TRUE;
@@ -137,10 +137,10 @@ static void _set_speed(int32_t speed)
 {
 	if (htim2.Instance)
 	{
-	//	term_printf("_set_speed(%d)\n", speed);
+	//	nuc_printf("_set_speed(%d)\n", speed);
 		if (speed<10)
 		{
-		//	term_printf("LOG: encoder HAL_TIM_Base_Stop\n");
+		//	nuc_printf("LOG: encoder HAL_TIM_Base_Stop\n");
 			HAL_TIM_Base_Stop(&htim2);
 			_TimerRunning = FALSE;
 		}
@@ -153,7 +153,7 @@ static void _set_speed(int32_t speed)
 			if (!_TimerRunning)
 			{
 				_TimerRunning = TRUE;
-			//	term_printf("LOG: encoder HAL_TIM_Base_Start period=%d\n", period);
+			//	nuc_printf("LOG: encoder HAL_TIM_Base_Start period=%d\n", period);
 				if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK) {
 					Error_Handler();
 				}

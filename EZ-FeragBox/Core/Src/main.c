@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include <stdarg.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -141,7 +141,6 @@ int main(void)
   HAL_UART_Receive_IT(&huart1, (uint8_t*)&RxDataFERAG, 1);
   HAL_UART_Receive_IT(&huart3, (uint8_t*)&RxDataNUC, 1);
 
-  term_init();
   enc_init();
   box_init();
 
@@ -656,27 +655,28 @@ void _nuc_send_next()
 	{
 		__disable_irq();
 		_NUC_Busy = TRUE;
-		HAL_UART_Transmit_IT(&huart3, TxDataNuc[_NUC_StartIdx], TxDataLenNuc[_NUC_StartIdx]); // NUC
+		HAL_UART_Transmit(&huart3, TxDataNuc[_NUC_StartIdx], TxDataLenNuc[_NUC_StartIdx], 100); // NUC
 		TxDataLenNuc[_NUC_StartIdx] = 0;
 		_NUC_StartIdx = (_NUC_StartIdx+1) % NUC_FIFO_CNT;
 		__enable_irq();
 	}
 }
 
-//--- nuc_get_buffer -------------------------------------
-int		nuc_get_buffer(int *pidx, char **buf)
+//--- nuc_printf --------------------------------------------
+void nuc_printf (const char *format, ...)
 {
+	int idx;
+	char *buf;
+
 	__disable_irq();
-	*pidx = _NUC_InIdx;
-	*buf = TxDataNuc[_NUC_InIdx];
+	idx = _NUC_InIdx;
 	_NUC_InIdx = (_NUC_InIdx+1) % NUC_FIFO_CNT;
 	__enable_irq();
-}
 
-//--- nuc_send_buffer -----------------------------------
-void nuc_send_buffer(int idx)
-{
-	TxDataLenNuc[idx]=strlen(TxDataNuc[idx]);
+	va_list args;
+	va_start(args, format);
+	TxDataLenNuc[idx]=vsprintf(TxDataNuc[idx], format, args);
+	va_end(args);
 	_nuc_send_next();
 }
 
@@ -732,7 +732,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
-     ex: term_printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     ex: nuc_printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

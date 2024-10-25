@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdarg.h>
 #include "box.h"
 #include "enc.h"
 #include "term.h"
@@ -23,19 +22,6 @@ void term_init(void)
 	memset(_Input, 0, sizeof(_Input));
 }
 
-//--- term_printf --------------------------------------------
-void term_printf (const char *format, ...)
-{
-	int idx;
-	char *buf;
-	nuc_get_buffer(&idx, &buf);
-	va_list args;
-	va_start(args, format);
-	vsprintf(buf, format, args);
-	va_end(args);
-	nuc_send_buffer(idx);
-}
-
 //--- term_handle_char -------------------------
 void term_handle_char(char ch)
 {
@@ -52,7 +38,7 @@ void term_handle_char(char ch)
 	}
 	else
 	{
-		term_printf("ERR: TERM fifo overflow\n");
+		nuc_printf("ERR: TERM fifo overflow\n");
 		_InputLen=0;
 	}
 }
@@ -74,6 +60,6 @@ void term_idle(void)
     	else if ((args=strstart(cmd, "prodLen"))) 	box_set_prodLen(atoi(args));
     	else if ((args=strstart(cmd, "pg"))) 		box_printGo();
     	else if ((args=strstart(cmd, "resetBX")))	box_reset_bx();
-    	else if (strlen(cmd)) term_printf("WARN: Unknown command >>%s<<\n", cmd);
+    	else if (strlen(cmd)) nuc_printf("WARN: Unknown command >>%s<<\n", cmd);
     }
 }

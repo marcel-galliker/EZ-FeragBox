@@ -89,7 +89,7 @@ void box_init(void)
 	_PaceCheck		 = -1;
 	_FeragCheck		 = -1;
 	box_start();
-	term_printf("LOG: box_init\n");
+	nuc_printf("LOG: box_init\n");
 }
 
 //--- box_set_pgDelay ------------------------------------
@@ -109,7 +109,7 @@ void box_set_prodLen(int len)
 //--- box_start -------------------------
 void box_start(void)
 {
-	term_printf("LOG: start\n");
+	nuc_printf("LOG: start\n");
 	memset(_Tracking, 0, sizeof(_Tracking));
 	_FeragMsgIn   	= 0;
 	_FeragMsgOut  	= 0;
@@ -133,7 +133,7 @@ void box_start(void)
 	enc_start();
 	{
 		int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
-		term_printf("print-done[start]=%d\n", done);
+		nuc_printf("print-done[start]=%d\n", done);
 	}
 
 //	_Status.flags |= FLAG_encoder_running;
@@ -152,7 +152,7 @@ void box_stop(void)
 {
 	if (_Running)
 	{
-		term_printf("stop\n");
+		nuc_printf("stop\n");
 		_Running = FALSE;
 	//	_Status.flags &= ~FLAG_encoder_running;
 	}
@@ -226,7 +226,7 @@ void box_handle_ferag_char(char data)
 	{
 		_FeragMsg.data[1]=data;
 		_Status.paceId = _FeragMsg.paceId;
-	//	term_printf("FERAG in 0x%02x 0x%02x, type=%d, info=%d, paceId=0x%02x\n", _FeragMsg.data[0], _FeragMsg.data[1], _FeragMsg.type, _FeragMsg.info, _FeragMsg.paceId);
+	//	nuc_printf("FERAG in 0x%02x 0x%02x, type=%d, info=%d, paceId=0x%02x\n", _FeragMsg.data[0], _FeragMsg.data[1], _FeragMsg.type, _FeragMsg.info, _FeragMsg.paceId);
 
 		_Status.feragMsgInCnt++;
 		_FeragMsgIn++;
@@ -248,7 +248,7 @@ static void _handle_feragMsg(void)
 		case 1:	if (!_Running)
 				{
 					if (!_ErrorFlag&1)
-						term_printf("ProductDetect pace=%d, ok=%d while encoder off\n", _FeragMsg.paceId, _FeragMsg.info);
+						nuc_printf("ProductDetect pace=%d, ok=%d while encoder off\n", _FeragMsg.paceId, _FeragMsg.info);
 					_ErrorFlag |= 1;
 				}
 				else if (_Status.dtCnt-_Status.pdCnt-_Status.emptyDoneCnt>=TRACKING_CNT)
@@ -256,16 +256,16 @@ static void _handle_feragMsg(void)
 					if (!(_ErrorFlag&2))
 					{
 						if (EZ_EncoderInPos<100)
-							term_printf("ERROR: Encoder input missing!\n");
+							nuc_printf("ERROR: Encoder input missing!\n");
 						else
-							term_printf("ERROR: Tracking overflow encIn=%d, encOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, enc_aar(), enc_cnt());
+							nuc_printf("ERROR: Tracking overflow encIn=%d, encOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, enc_aar(), enc_cnt());
 					}
 					_ErrorFlag |= 2;
 				}
 				else
 				{
 					if (_FeragCheck<0) _FeragCheck=_FeragMsg.paceId & 0x7F;
-					else if (_FeragMsg.paceId!=_FeragCheck) term_printf("WARN: Ferag Pace[%03d] expected=%d\n", _FeragMsg.paceId, _FeragCheck);
+					else if (_FeragMsg.paceId!=_FeragCheck) nuc_printf("WARN: Ferag Pace[%03d] expected=%d\n", _FeragMsg.paceId, _FeragCheck);
 					_FeragCheck = (_FeragMsg.paceId+1) & 0x7F;
 
 					int idx  = _FeragMsg.paceId % TRACKING_CNT;
@@ -280,15 +280,15 @@ static void _handle_feragMsg(void)
 					int dist = _EncoderPos - _LastPDPos;
 					_LastPDPos = _EncoderPos;
 					_Tracking[idx].delay = _PrintGoDelay+corr;
-					term_printf("Speed=%d, corr=%d\n", _Status.enc.encOutSpeed, corr);
-					term_printf("DT:%03d,%d dist=%d, EncIn=%d, EncOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", _FeragMsg.paceId, _Tracking[idx].prod.info&1, dist, EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, enc_aar(), enc_cnt());
-					if (_Status.dtCnt && dist<100) term_printf("ERROR: Encoder input missing!\n");
+					nuc_printf("Speed=%d, corr=%d\n", _Status.enc.encOutSpeed, corr);
+					nuc_printf("DT:%03d,%d dist=%d, EncIn=%d, EncOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", _FeragMsg.paceId, _Tracking[idx].prod.info&1, dist, EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, enc_aar(), enc_cnt());
+					if (_Status.dtCnt && dist<100) nuc_printf("ERROR: Encoder input missing!\n");
 					_Status.dtCnt++;
 				}
 				break;
 
 		case 2:		_Status.aliveCnt++; break;
-		default: 	term_printf("Unknown Message Type=%d\n", _FeragMsg.type);
+		default: 	nuc_printf("Unknown Message Type=%d\n", _FeragMsg.type);
 					break;
 		}
 		_Status.feragMsgOutCnt++;
@@ -302,14 +302,14 @@ void box_handle_encoder(void)
 	_EncoderPos++;
 	_check_print_done();
 //	if (_EncoderPos%1000==0)
-//		term_printf("Enc=%d: DELAY=%d, %d, %d ,%d, %d, %d, %d, %d\n", _EncoderPos, _Tracking[0].delay, _Tracking[1].delay, _Tracking[2].delay, _Tracking[3].delay, _Tracking[4].delay, _Tracking[5].delay, _Tracking[6].delay, _Tracking[7].delay);
+//		nuc_printf("Enc=%d: DELAY=%d, %d, %d ,%d, %d, %d, %d, %d\n", _EncoderPos, _Tracking[0].delay, _Tracking[1].delay, _Tracking[2].delay, _Tracking[3].delay, _Tracking[4].delay, _Tracking[5].delay, _Tracking[6].delay, _Tracking[7].delay);
 	for (int i=0; i<TRACKING_CNT; i++)
 	{
 		if (_Tracking[i].delay>0 && (--_Tracking[i].delay)==0)
 		{
 			_TrackIdx=i;
-			term_printf("PrintGo Pace[%03d], ok=%d\n", _Tracking[i].prod.paceId, _Tracking[i].prod.info);
-			if (_PrintDoneDelay) term_printf("ERROR: PrintGo while printing, PrintDoneDelay=%d\n", _PrintDoneDelay);
+			nuc_printf("PrintGo Pace[%03d], ok=%d\n", _Tracking[i].prod.paceId, _Tracking[i].prod.info);
+			if (_PrintDoneDelay) nuc_printf("ERROR: PrintGo while printing, PrintDoneDelay=%d\n", _PrintDoneDelay);
 			box_printGo();
 		}
 	}
@@ -317,9 +317,9 @@ void box_handle_encoder(void)
 	{
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
 		int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
-	//	term_printf("PrintGo Off, _PrinterDoneIn=%d done=%d\n", _PrinterDoneIn, done);
+	//	nuc_printf("PrintGo Off, _PrinterDoneIn=%d done=%d\n", _PrinterDoneIn, done);
 		if (_PrinterDoneIn || done) _AwaitPrintDone = FALSE;
-		if (!done) term_printf("PrintGo OFF but print-done low\n");
+		if (!done) nuc_printf("PrintGo OFF but print-done low\n");
 	}
 	if ((_PrintDoneDelay>0) && (--_PrintDoneDelay==0))
 	{
@@ -336,9 +336,9 @@ static void _check_print_done(void)
 	{
 		// beginning of label
 		_AwaitPrintDone = FALSE;
-		term_printf("PRINT-DONE %d\n", _Status.pgCnt);
+		nuc_printf("PRINT-DONE %d\n", _Status.pgCnt);
 	}
-	if (done!=_PrinterDoneIn) term_printf("print-done[%d]=%d at %d\n", _Status.pgCnt, done, _EncoderPos);
+	if (done!=_PrinterDoneIn) nuc_printf("print-done[%d]=%d at %d\n", _Status.pgCnt, done, _EncoderPos);
 	_PrinterDoneIn = done;
 }
 
@@ -347,12 +347,12 @@ static void _send_print_done(void)
 {
 	if (enc_fixSpeed() || _Tracking[_TrackIdx].prod.info&0x01)
 	{
-		term_printf("PD%d: PaceId[%d]=%d\n", _Status.pdCnt+_Status.emptyDoneCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId);
+		nuc_printf("PD%d: PaceId[%d]=%d\n", _Status.pdCnt+_Status.emptyDoneCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId);
 		_Status.pdCnt++;
 	}
 	else
 	{
-		term_printf("ED%d: PaceId[%d]=%d\n", _Status.pdCnt+_Status.emptyDoneCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId);
+		nuc_printf("ED%d: PaceId[%d]=%d\n", _Status.pdCnt+_Status.emptyDoneCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId);
 		_Status.emptyDoneCnt++;
 	}
 }
@@ -361,17 +361,17 @@ static void _send_print_done(void)
 void box_printGo(void)
 {
 	static int lastpos=0;
-//	term_printf("PrintGo ON %d\n",  _Ticks);
+//	nuc_printf("PrintGo ON %d\n",  _Ticks);
 	_Status.paceId = _Tracking[_TrackIdx].prod.paceId;
 	int dist = _EncoderPos - lastpos;
 	lastpos=_EncoderPos;
 	if (enc_fixSpeed() || _Tracking[_TrackIdx].prod.info&0x01)
 	{
 		int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
-		term_printf("PG%d: PaceId[%d]=%d, dist=%d, pos=%d, print-done=%d, done=%d, _AwaitPrintDone=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist, _EncoderPos, _PrinterDoneIn, done, _AwaitPrintDone);
+		nuc_printf("PG%d: PaceId[%d]=%d, dist=%d, pos=%d, print-done=%d, done=%d, _AwaitPrintDone=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist, _EncoderPos, _PrinterDoneIn, done, _AwaitPrintDone);
 	//
-		if (_AwaitPrintDone) term_printf("WARN: PRINT-DONE missing, _PrinterDoneIn=%d, done=%d\n", _PrinterDoneIn, done);
-	//	if (done) term_printf("PrintGo ON while print-done high\n");
+		if (_AwaitPrintDone) nuc_printf("WARN: PRINT-DONE missing, _PrinterDoneIn=%d, done=%d\n", _PrinterDoneIn, done);
+	//	if (done) nuc_printf("PrintGo ON while print-done high\n");
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_SET);
 		_PrintGoOffDelay = 10;
 		_AwaitPrintDone = TRUE;
@@ -380,7 +380,7 @@ void box_printGo(void)
 	}
 	else
 	{
-		term_printf("EG%d: PaceId[%d]=%d, dist=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist);
+		nuc_printf("EG%d: PaceId[%d]=%d, dist=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist);
 		_PrintDoneDelay = 10;
 		_Status.emptyGoCnt++;
 	}
@@ -391,6 +391,6 @@ void box_send_status(void)
 {
 	char msg[512];
 	_Status.test++;
-	term_printf("STATUS %s\n", bin2hex(msg, &_Status, sizeof(_Status)));
+	nuc_printf("STATUS %s\n", bin2hex(msg, &_Status, sizeof(_Status)));
 }
 
