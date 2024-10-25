@@ -131,6 +131,11 @@ void box_start(void)
 	_Running = TRUE;
 	HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
 	enc_start();
+	{
+		int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
+		term_printf("print-done[start]=%d\n", done);
+	}
+
 //	_Status.flags |= FLAG_encoder_running;
 	//--- Simulation -----------------
 	if (SIMULATION)
@@ -314,7 +319,7 @@ void box_handle_encoder(void)
 		int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
 	//	term_printf("PrintGo Off, _PrinterDoneIn=%d done=%d\n", _PrinterDoneIn, done);
 		if (_PrinterDoneIn || done) _AwaitPrintDone = FALSE;
-		if (!done) term_printf("WARN: PrintGo OFF but print-done low\n");
+		if (!done) term_printf("PrintGo OFF but print-done low\n");
 	}
 	if ((_PrintDoneDelay>0) && (--_PrintDoneDelay==0))
 	{
