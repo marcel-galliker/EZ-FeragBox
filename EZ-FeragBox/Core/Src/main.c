@@ -141,6 +141,7 @@ int main(void)
   HAL_UART_Receive_IT(&huart1, (uint8_t*)&RxDataFERAG, 1);
   HAL_UART_Receive_IT(&huart3, (uint8_t*)&RxDataNUC, 1);
 
+  term_init();
   enc_init();
   box_init();
 
@@ -655,7 +656,7 @@ void _nuc_send_next()
 	{
 		__disable_irq();
 		_NUC_Busy = TRUE;
-		HAL_UART_Transmit(&huart3, TxDataNuc[_NUC_StartIdx], TxDataLenNuc[_NUC_StartIdx], 100); // NUC
+		HAL_UART_Transmit_IT(&huart3, TxDataNuc[_NUC_StartIdx], TxDataLenNuc[_NUC_StartIdx]); // NUC
 		TxDataLenNuc[_NUC_StartIdx] = 0;
 		_NUC_StartIdx = (_NUC_StartIdx+1) % NUC_FIFO_CNT;
 		__enable_irq();

@@ -22,6 +22,8 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
+#include "ge_common.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -54,6 +56,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 void 	nuc_printf (const char *format, ...);
+void 	jump_to(UINT32 addr);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -67,24 +70,10 @@ void 	nuc_printf (const char *format, ...);
 #define DIP_2_GPIO_Port GPIOA
 #define DIP_1_Pin GPIO_PIN_6
 #define DIP_1_GPIO_Port GPIOA
-#define PRINT_GO_Pin GPIO_PIN_8
-#define PRINT_GO_GPIO_Port GPIOE
-#define PRINT_DONE_Pin GPIO_PIN_9
-#define PRINT_DONE_GPIO_Port GPIOE
 #define DIP_0_Pin GPIO_PIN_8
 #define DIP_0_GPIO_Port GPIOA
-#define RS422_COM_TX_Pin GPIO_PIN_9
-#define RS422_COM_TX_GPIO_Port GPIOA
-#define RS422_COM_RX_Pin GPIO_PIN_10
-#define RS422_COM_RX_GPIO_Port GPIOA
-#define RESET_BX_Pin GPIO_PIN_6
-#define RESET_BX_GPIO_Port GPIOF
 #define DISPLAY_PWR_EN_Pin GPIO_PIN_7
 #define DISPLAY_PWR_EN_GPIO_Port GPIOF
-#define ENCODER_A_Pin GPIO_PIN_15
-#define ENCODER_A_GPIO_Port GPIOA
-#define ENCODER_B_Pin GPIO_PIN_3
-#define ENCODER_B_GPIO_Port GPIOB
 #define I2C1_SCL_Pin GPIO_PIN_6
 #define I2C1_SCL_GPIO_Port GPIOB
 #define I2C1_SDA_Pin GPIO_PIN_7
