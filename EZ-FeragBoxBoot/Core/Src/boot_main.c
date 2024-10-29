@@ -20,12 +20,12 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "term.h"
-#include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ge_common.h"
+#include "term.h"
+#include "main.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,7 +44,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
 
 UART_HandleTypeDef huart3;
 
@@ -55,10 +54,8 @@ volatile uint8_t RxDataNUC;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
-static void MX_GPIO_DeInit(void);
 static void MX_USART3_UART_Init(void);
-static void MX_I2C1_Init(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -72,7 +69,7 @@ static void MX_I2C1_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
-int main(void)
+int main(void)	// boot_main
 {
 
   /* USER CODE BEGIN 1 */
@@ -96,14 +93,14 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+//  MX_GPIO_Init();
   MX_USART3_UART_Init();
-  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
   term_init();
   HAL_UART_Receive_IT(&huart3, (uint8_t*)&RxDataNUC, 1);
-
+  __enable_irq();
+  nuc_printf("BootLoader Running\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -113,6 +110,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  term_idle();
   }
   /* USER CODE END 3 */
 }
@@ -167,53 +165,6 @@ void SystemClock_Config(void)
   }
 }
 
-/**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C1_Init(void)
-{
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x2000090E;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Analogue filter
-  */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Digital filter
-  */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
-
-}
 
 /**
   * @brief USART3 Initialization Function
@@ -250,87 +201,36 @@ static void MX_USART3_UART_Init(void)
 
 }
 
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOF_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-
-  /*Configure GPIO pins : DIP_5_Pin DIP_4_Pin DIP_3_Pin DIP_2_Pin
-                           DIP_1_Pin DIP_0_Pin */
-  GPIO_InitStruct.Pin  = DIP_5_Pin|DIP_4_Pin|DIP_3_Pin|DIP_2_Pin|DIP_1_Pin|DIP_0_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
-}
-
-static void MX_GPIO_DeInit(void)
-{
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOF_CLK_DISABLE();
-  __HAL_RCC_GPIOA_CLK_DISABLE();
-  __HAL_RCC_GPIOE_CLK_DISABLE();
-  __HAL_RCC_GPIOB_CLK_DISABLE();
-
-  /*Configure GPIO pins : DIP_5_Pin DIP_4_Pin DIP_3_Pin DIP_2_Pin
-                           DIP_1_Pin DIP_0_Pin */
-
-  HAL_GPIO_DeInit(GPIOA, DIP_0_Pin);
-  HAL_GPIO_DeInit(GPIOA, DIP_1_Pin);
-  HAL_GPIO_DeInit(GPIOA, DIP_2_Pin);
-  HAL_GPIO_DeInit(GPIOA, DIP_3_Pin);
-  HAL_GPIO_DeInit(GPIOA, DIP_4_Pin);
-
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
-}
-
-/////////////////////////////////////////////////////blind jump to memory struct
-typedef void (application_t)(void);
-
-typedef struct
-{
-    uint32_t		stack_addr;     // Stack Pointer
-    application_t*	func_p;        // Program Counter
-} JumpStruct;
-//////////////////////////////////////////////////////
-
 //--- _jump_to -----------------------------------------------
 void jump_to(UINT32 addr)
 {
-	__disable_irq();
 	HAL_RCC_DeInit();
-	MX_GPIO_DeInit();
-	HAL_I2C_DeInit(&hi2c1);
 	HAL_UART_DeInit(&huart3);
 	HAL_DeInit();
+	__set_PRIMASK(1);
+	__disable_irq();
+
 	SysTick->CTRL = 0;
 	SysTick->LOAD = 0;
 	SysTick->VAL = 0;
 
+	UINT32 *vtab = (UINT32*) addr;
+	SCB->VTOR = addr;
+	typedef int(*start_fct)	(void);
+	__set_MSP(vtab[0]);
+	start_fct start;
+	start = (start_fct)vtab[1];
+	__enable_irq();
+	start();
 	/*
-	JumpStruct *vector_p = (JumpStruct*) (0x8000004);
-	vector_p->stack_addr = 0xFD0C0008;
-	asm("msr msp, %0; bx %1;" : : "r"(vector_p->stack_addr), "r"(vector_p->func_p));
-	*/
-	SCB->VTOR = addr; //0x080080000
+	void (*app_reset_handler)(void);
+	app_reset_handler = (void*) resethandler_address;
+	//3. jump to reset handler of the user application
+	app_reset_handler();
+
+
+//	asm("msr msp, %0; bx %1;" : : "r"(tab[0]), "r"(tab[1]));
+
 	uint32_t msp_value = *(__IO uint32_t *)addr;
 	__set_MSP(msp_value);
 
@@ -340,7 +240,9 @@ void jump_to(UINT32 addr)
 
 	//3. jump to reset handler of the user application
 	app_reset_handler();
+	*/
 }
+
 //--- nuc_printf --------------------------------------------
 void nuc_printf (const char *format, ...)
 {

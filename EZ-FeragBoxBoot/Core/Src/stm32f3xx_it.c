@@ -212,7 +212,6 @@ void RCC_IRQHandler(void)
 
   /* USER CODE END RCC_IRQn 1 */
 }
-
 /**
   * @brief This function handles USART3 global interrupt / USART3 wake-up interrupt through EXTI line 28.
   */

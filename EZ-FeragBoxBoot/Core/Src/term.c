@@ -35,7 +35,6 @@ void term_handle_char(char ch)
 			memcpy(_Cmd[_CmdIn%CMD_FIFO_SIZE], _Input, _InputLen);
 			_InputLen=0;
 			_CmdIn++;
-			term_idle();
 		}
 	}
 	else
@@ -55,22 +54,11 @@ void term_idle(void)
 		char *args;
  //   	nuc_printf("TERM: cmd[%d] >>%s<<\n", _CmdOut%CMD_FIFO_SIZE, cmd);
 		_CmdOut++;
-    	if      ((args=strstart(cmd, "version"))) 	_version();
-    	else if ((args=strstart(cmd, "FLASH_RD"))) 	_flash_read(args);
-    	else if ((args=strstart(cmd, "START FeragBox"))) jump_to(0x8008000);
+    	if      ((args=strstart(cmd, "FLASH_Version")))  _version();
+    	else if ((args=strstart(cmd, "FLASH_RD"))) 		 _flash_read(args);
+    	else if ((args=strstart(cmd, "FLASH_START FeragBox"))) jump_to(0x8008000);
     	else if (strlen(cmd))
     		nuc_printf("WARN: Unknown command >>%s<<\n", cmd);
-
-    	/*
-
-    	else if ((args=strstart(cmd, "start"))) 	box_start();
-    	else if ((args=strstart(cmd, "stop"))) 		box_stop();
-    	else if ((args=strstart(cmd, "pgDelay"))) 	box_set_pgDelay(atoi(args));
-    	else if ((args=strstart(cmd, "prodLen"))) 	box_set_prodLen(atoi(args));
-    	else if ((args=strstart(cmd, "pg"))) 		box_printGo();
-    	else if ((args=strstart(cmd, "resetBX")))	box_reset_bx();
-    	else if (strlen(cmd)) nuc_printf("WARN: Unknown command >>%s<<\n", cmd);
-    	*/
     }
 }
 
