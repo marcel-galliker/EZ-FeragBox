@@ -11,9 +11,10 @@ static char _Input[512];
 static char _Cmd[CMD_FIFO_SIZE][512];
 static int  _CmdIn, _CmdOut;
 static int	_InputLen=0;
+static UINT64 _Data[128/8];
 
 //--- prototypes ---------------------------------------------
-static void _version(void);
+static void _flash_version(char *args);
 static void _flash_read(char *args);
 static void _flash_write(char *args);
 static void _flash_erase(char *args);
@@ -56,7 +57,7 @@ void term_idle(void)
 		char *args;
  //   	nuc_printf("TERM: cmd[%d] >>%s<<\n", _CmdOut%CMD_FIFO_SIZE, cmd);
 		_CmdOut++;
-    	if      ((args=strstart(cmd, "FLASH_Version")))  _version();
+    	if      ((args=strstart(cmd, "FLASH_VERSION")))  _flash_version(args);
     	else if ((args=strstart(cmd, "FLASH_RD"))) 		 _flash_read(args);
     	else if ((args=strstart(cmd, "FLASH_WR"))) 		 _flash_write(args);
     	else if ((args=strstart(cmd, "FLASH_ERASE"))) 		 _flash_erase(args);
@@ -66,10 +67,12 @@ void term_idle(void)
     }
 }
 
-//--- _version ------------------------------
-static void _version(void)
+//--- _flash_version ------------------------------
+static void _flash_version(char *args)
 {
-	nuc_printf("version 1.2.3.4\n");
+	UINT32 addr;
+	sscanf(args, "0x%08x %d", &addr);
+	nuc_printf("FLASH_VERSION %s\n", bin2hex(_Data, addr, 8));
 }
 
 //--- _flash_read ----------------------------------------------------
@@ -86,16 +89,15 @@ static void _flash_read(char *args)
 //--- _flash_write ----------------------------------------------------
 static void _flash_write(char *args)
 {
-	static UINT64 data[128/8];
 	UINT64 *pdata;
 	UINT32 addr, vaddr, len;
 	INT32 error=-1;
 	sscanf(args, "0x%08x %d", &addr, &len);
 	if (len!=128)
 		printf("test\n");
-	hex2bin(&args[11], data, len);
+	hex2bin(&args[11], _Data, len);
 	HAL_FLASH_Unlock();
-	pdata = data;
+	pdata = _Data;
 	for(int i=0; i<len; i+=8)
 	{
 		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, addr+i, pdata[i/8]) != HAL_OK)
