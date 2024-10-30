@@ -105,11 +105,13 @@ static void _tick_10ms(int ticks);
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
+  if (main>0x8008000)
+	  SCB->VTOR = 0x8008000;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
+
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
@@ -128,9 +130,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART3_UART_Init();
-  MX_TIM3_Init();
   MX_I2C1_Init();
   MX_TIM2_Init();
+  MX_TIM3_Init();
   MX_TIM5_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */

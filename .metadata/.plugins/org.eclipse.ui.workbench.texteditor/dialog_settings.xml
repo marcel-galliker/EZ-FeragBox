@@ -1,22 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value=""/>
+		<item key="selection" value="HAL_FLASH_ERROR_PROG"/>
 		<item key="wrap" value="false"/>
 		<item key="casesensitive" value="false"/>
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
-			<item value="i2c"/>
-			<item value="hi2c1"/>
-			<item value="MX_I2C1_Init"/>
-			<item value="stack"/>
-			<item value="huart3"/>
-			<item value="_nuc_send_next"/>
-			<item value="MX_USART3_UART_Init"/>
-			<item value="MX_GPIO_Init"/>
-			<item value="MX_TIM5_Init"/>
+			<item value="HAL_FLASH_ERROR_PROG"/>
+			<item value="ErrorCode"/>
+			<item value="VTOR"/>
+			<item value="MX_TIM3_Init"/>
+			<item value="htim3"/>
+			<item value="TIM_HandleTypeDef htim3;"/>
+			<item value="tim3"/>
+			<item value="HAL_TIM_PeriodElapsedCallback"/>
 		</list>
 		<list key="replacehistory">
 			<item value="nuc_printf"/>

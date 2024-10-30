@@ -50,3 +50,17 @@ void *hex2bin(char *str, void *data, int len)
 	}
 	return data;
 }
+
+//--- hex2uint64 --------------------------------
+UINT64 hex2uint64(char *str)
+{
+	UINT64 val=0;
+	for(char *ch=str; *ch; ch++)
+	{
+		if (*ch>='0' && *ch<='9') 		val = 16*val+*ch-'0';
+		else if (*ch>='a' && *ch<='f') 	val = 16*val+*ch-'a'+10;
+		else if (*ch>='A' && *ch<='F') 	val = 16*val+*ch-'A'+10;
+		else break;
+	}
+	return val;
+}

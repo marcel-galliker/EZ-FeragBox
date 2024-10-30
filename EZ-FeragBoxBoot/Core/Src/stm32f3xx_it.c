@@ -55,8 +55,6 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern TIM_HandleTypeDef htim2;
-extern TIM_HandleTypeDef htim5;
 extern UART_HandleTypeDef huart3;
 /* USER CODE BEGIN EV */
 
@@ -212,6 +210,7 @@ void RCC_IRQHandler(void)
 
   /* USER CODE END RCC_IRQn 1 */
 }
+
 /**
   * @brief This function handles USART3 global interrupt / USART3 wake-up interrupt through EXTI line 28.
   */
