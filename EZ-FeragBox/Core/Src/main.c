@@ -106,8 +106,10 @@ static void _tick_10ms(int ticks);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
   if (main>0x8008000)
-	  SCB->VTOR = 0x8008000;
+	  SCB->VTOR = 0x8008000;	// SCB->VTOR must point to the start address of FLASH in >>STM32F373CCTX_FLASH.ld<< if other than 0x8000000
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/

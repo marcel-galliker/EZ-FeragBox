@@ -65,6 +65,7 @@ static int			_EncoderPos;
 static int			_LastPDPos;
 static int			_PrinterDoneIn=-1;
 static int			_AwaitPrintDone;
+static int			_PrintGoPos;
 static int			_PrintDoneDelay;
 static int 			_ErrorFlag;
 
@@ -83,6 +84,7 @@ void box_init(void)
 	_FeragMsgIn      = 0;
 	_FeragMsgOut     = 0;
 	_TrackIdx 	 	 = 0;
+	_PrintGoPos		 = 0;
 	_PrintDoneDelay  = 0;
 	_AwaitPrintDone  = FALSE;
 	_PrinterDoneIn   = -1;
@@ -126,15 +128,12 @@ void box_start(void)
 	_ErrorFlag		 = 0;
 	_PrintDoneDelay  = 0;
 	_AwaitPrintDone  = FALSE;
-	_PrinterDoneIn   = -1;
 //	box_send_status();
 	_Running = TRUE;
 	HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
 	enc_start();
-	{
-		int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
-		nuc_printf("print-done[start]=%d\n", done);
-	}
+	_PrinterDoneIn=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
+	nuc_printf("print-done[start]=%d\n", _PrinterDoneIn);
 
 //	_Status.flags |= FLAG_encoder_running;
 	//--- Simulation -----------------
@@ -316,10 +315,6 @@ void box_handle_encoder(void)
 	if ((_PrintGoOffDelay>0) && (--_PrintGoOffDelay==0))
 	{
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
-		int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
-	//	nuc_printf("PrintGo Off, _PrinterDoneIn=%d done=%d\n", _PrinterDoneIn, done);
-		if (_PrinterDoneIn || done) _AwaitPrintDone = FALSE;
-		if (!done) nuc_printf("PrintGo OFF but print-done low\n");
 	}
 	if ((_PrintDoneDelay>0) && (--_PrintDoneDelay==0))
 	{
@@ -330,21 +325,22 @@ void box_handle_encoder(void)
 //--- _check_print_done --------------------------------------------------
 static void _check_print_done(void)
 {
-	int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
-	if (_PrinterDoneIn<0) _PrinterDoneIn=done;
-	if (_PrinterDoneIn && !done)
+	int printDone=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
+	int dist= _EncoderPos-_PrintGoPos;
+	if (_PrinterDoneIn && !printDone && _AwaitPrintDone)
 	{
 		// beginning of label
 		_AwaitPrintDone = FALSE;
-		nuc_printf("PRINT-DONE %d\n", _Status.pgCnt);
+		nuc_printf("PRINT-DONE %d dist=%d\n", _Status.pgCnt, dist);
 	}
-	if (done!=_PrinterDoneIn) nuc_printf("print-done[%d]=%d at %d\n", _Status.pgCnt, done, _EncoderPos);
-	_PrinterDoneIn = done;
+	if (printDone!=_PrinterDoneIn) nuc_printf("print-done[%d]=%d at %d, dist=%d\n", _Status.pgCnt, printDone, _EncoderPos, dist);
+	_PrinterDoneIn = printDone;
 }
 
 //--- _send_print_done ----------------------------------------
 static void _send_print_done(void)
 {
+	if (_AwaitPrintDone) nuc_printf("ERROR: Encoder input missing! At label end\n");
 	if (enc_fixSpeed() || _Tracking[_TrackIdx].prod.info&0x01)
 	{
 		nuc_printf("PD%d: PaceId[%d]=%d\n", _Status.pdCnt+_Status.emptyDoneCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId);
@@ -367,14 +363,14 @@ void box_printGo(void)
 	lastpos=_EncoderPos;
 	if (enc_fixSpeed() || _Tracking[_TrackIdx].prod.info&0x01)
 	{
-		int done=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
-		nuc_printf("PG%d: PaceId[%d]=%d, dist=%d, pos=%d, print-done=%d, done=%d, _AwaitPrintDone=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist, _EncoderPos, _PrinterDoneIn, done, _AwaitPrintDone);
+		nuc_printf("PG%d: PaceId[%d]=%d, dist=%d, pos=%d, print-done=%d, _AwaitPrintDone=%d\n", _Status.pgCnt+_Status.emptyGoCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId, dist, _EncoderPos, _PrinterDoneIn, _AwaitPrintDone);
 	//
-		if (_AwaitPrintDone) nuc_printf("WARN: PRINT-DONE missing, _PrinterDoneIn=%d, done=%d\n", _PrinterDoneIn, done);
+		if (_AwaitPrintDone) nuc_printf("WARN: PRINT-DONE missing\n");
 	//	if (done) nuc_printf("PrintGo ON while print-done high\n");
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_SET);
+		_PrintGoPos 	 = _EncoderPos;
 		_PrintGoOffDelay = 10;
-		_AwaitPrintDone = TRUE;
+		_AwaitPrintDone  = TRUE;
 		_PrintDoneDelay  = _ProdLen;
 		_Status.pgCnt++;
 	}
