@@ -45,8 +45,6 @@ void enc_init(void)
 	EZ_EncoderInPos = 0;
 }
 
-static int test=0;
-
 //--- enc_irq ------------------------
 void enc_in_irq(TIM_HandleTypeDef *htim)
 {

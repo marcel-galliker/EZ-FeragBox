@@ -72,6 +72,7 @@ static int _NUC_InIdx=0;
 static int _NUC_StartIdx=0;
 static int _NUC_Busy=0;
 static int _powerDisplay=12000;
+static UINT32 _JumpToAddr=-1;
 
 /* USER CODE END PV */
 
@@ -84,9 +85,11 @@ static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_USART1_UART_Init(void);
+static void _jump_to(UINT32 addr);
 /* USER CODE BEGIN PFP */
 
 #define WRITE_PROTOTYPE int _write(int file, char *ptr, int len)
+static void MX_GPIO_DeInit(void);
 
 // void powerCommand(const char* args);
 
@@ -107,7 +110,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-  if (main>0x8008000)
+  if ((int)main>0x8008000)
 	  SCB->VTOR = 0x8008000;	// SCB->VTOR must point to the start address of FLASH in >>STM32F373CCTX_FLASH.ld<< if other than 0x8000000
 
   /* USER CODE END 1 */
@@ -160,6 +163,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		if (_JumpToAddr!=-1) _jump_to(_JumpToAddr);
 		int ticks= HAL_GetTick();
 
 		while (ticks-_ticks>9)
@@ -567,6 +571,15 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
+static void MX_GPIO_DeInit(void)
+{
+	__HAL_RCC_GPIOF_CLK_DISABLE();
+	__HAL_RCC_GPIOA_CLK_DISABLE();
+	__HAL_RCC_GPIOE_CLK_DISABLE();
+	__HAL_RCC_GPIOB_CLK_DISABLE();
+	HAL_GPIO_DeInit(PRINT_GO_GPIO_Port, PRINT_GO_Pin);
+}
+
 /* USER CODE BEGIN 4 */
 //--- HAL_TIM_PeriodElapsedCallback -------------------------
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
@@ -672,7 +685,6 @@ void _nuc_send_next()
 void nuc_printf (const char *format, ...)
 {
 	int idx;
-	char *buf;
 
 	__disable_irq();
 	idx = _NUC_InIdx;
@@ -684,6 +696,40 @@ void nuc_printf (const char *format, ...)
 	TxDataLenNuc[idx]=vsprintf(TxDataNuc[idx], format, args);
 	va_end(args);
 	_nuc_send_next();
+}
+
+//--- _jump_to -----------------------------------------------
+void jump_to(UINT32 addr)
+{
+	_JumpToAddr = addr;
+}
+
+static void _jump_to(UINT32 addr)
+{
+	__disable_irq();
+	__set_PRIMASK(1);
+
+	HAL_RCC_DeInit();
+	HAL_UART_DeInit(&huart1);
+	HAL_UART_DeInit(&huart3);
+	HAL_TIM_Base_DeInit(&htim2);
+	HAL_TIM_Base_DeInit(&htim3);
+	HAL_TIM_Base_DeInit(&htim5);
+	MX_GPIO_DeInit();
+	HAL_DeInit();
+
+	SysTick->CTRL = 0;
+	SysTick->LOAD = 0;
+	SysTick->VAL = 0;
+
+	UINT32 *vtab = (UINT32*) addr;
+	SCB->VTOR = addr;
+	typedef int(*start_fct)	(void);
+	__set_MSP(vtab[0]);
+	start_fct start;
+	start = (start_fct)vtab[1];
+	__enable_irq();
+	start();
 }
 
 //--- HAL_UART_TxCpltCallback ---------------------------

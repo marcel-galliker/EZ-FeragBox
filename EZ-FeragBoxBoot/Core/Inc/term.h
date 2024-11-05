@@ -1,8 +1,8 @@
 /*
  * terminal.h
  *
- *  Created on: Mar 25, 2024
- *      Author: WPATR
+ *  Created on: Apr 12, 2024
+ *      Author: marcel@galliker-engineering.ch
  */
 
 #ifndef INC_TERM_H_

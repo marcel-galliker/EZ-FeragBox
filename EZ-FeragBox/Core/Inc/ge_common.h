@@ -20,6 +20,7 @@
 #define INT16	int16_t
 #define INT32	int32_t
 #define UINT32	uint32_t
+#define UINT64	uint64_t
 
 char *strstart(const char *str, const char *start);
 char *bin2hex(char *str, void *data, int len);	// converts to hex-string

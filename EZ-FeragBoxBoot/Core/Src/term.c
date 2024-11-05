@@ -3,27 +3,22 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "ge_common.h"
-#include "term.h"
+#include "boot_loader.h"
 #include "main.h"
+#include "term.h"
 
 #define CMD_FIFO_SIZE 8
 static char _Input[512];
 static char _Cmd[CMD_FIFO_SIZE][512];
 static int  _CmdIn, _CmdOut;
 static int	_InputLen=0;
-static UINT64 _Data[128/8];
-
-//--- prototypes ---------------------------------------------
-static void _flash_version(char *args);
-static void _flash_read(char *args);
-static void _flash_write(char *args);
-static void _flash_erase(char *args);
 
 //--- terminal_init --------------------------------
 void term_init(void)
 {
 	_InputLen = 0;
 	_CmdIn= _CmdOut = 0;
+	memset(_Cmd, 0, sizeof(_Cmd));
 	memset(_Input, 0, sizeof(_Input));
 }
 
@@ -54,86 +49,10 @@ void term_idle(void)
 	if (_CmdOut!=_CmdIn)
     {
     	char *cmd = _Cmd[_CmdOut%CMD_FIFO_SIZE];
-		char *args;
  //   	nuc_printf("TERM: cmd[%d] >>%s<<\n", _CmdOut%CMD_FIFO_SIZE, cmd);
 		_CmdOut++;
-    	if      ((args=strstart(cmd, "FLASH_VERSION")))  _flash_version(args);
-    	else if ((args=strstart(cmd, "FLASH_RD"))) 		 _flash_read(args);
-    	else if ((args=strstart(cmd, "FLASH_WR"))) 		 _flash_write(args);
-    	else if ((args=strstart(cmd, "FLASH_ERASE"))) 		 _flash_erase(args);
-    	else if ((args=strstart(cmd, "FLASH_START FeragBox"))) jump_to(0x8008000);
-    	else if (strlen(cmd))
+		int ret = bl_handle_cmd(cmd);
+		if (!ret && strlen(cmd))
     		nuc_printf("WARN: Unknown command >>%s<<\n", cmd);
     }
-}
-
-//--- _flash_version ------------------------------
-static void _flash_version(char *args)
-{
-	UINT32 addr;
-	sscanf(args, "0x%08x %d", &addr);
-	nuc_printf("FLASH_VERSION %s\n", bin2hex(_Data, addr, 8));
-}
-
-//--- _flash_read ----------------------------------------------------
-static void _flash_read(char *args)
-{
-	UINT32 addr;
-	int len;
-	UINT32 data[2];
-	sscanf(args, "0x%08x %d", &addr, &len);
-	memcpy(data, addr, 8);
-	nuc_printf("FLASH_RD 0x%08x 0x%08x%08x\n", addr, data[0], data[1]);
-}
-
-//--- _flash_write ----------------------------------------------------
-static void _flash_write(char *args)
-{
-	UINT64 *pdata;
-	UINT32 addr, vaddr, len;
-	INT32 error=-1;
-	sscanf(args, "0x%08x %d", &addr, &len);
-	if (len!=128)
-		printf("test\n");
-	hex2bin(&args[11], _Data, len);
-	HAL_FLASH_Unlock();
-	pdata = _Data;
-	for(int i=0; i<len; i+=8)
-	{
-		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, addr+i, pdata[i/8]) != HAL_OK)
-		{
-			error = HAL_FLASH_GetError();
-			break;
-		}
-	}
-	HAL_FLASH_Lock();
-	if (error>=0) nuc_printf("ERROR: FLASH_WR at 0x%08x\n", error);
-	else   		  nuc_printf("FLASH_WR 0x%08x\n", addr, len);
-}
-
-//--- _flash_erase --------------------------------------------
-static void _flash_erase(char *args)
-{
-	UINT32 addr;
-	int len;
-	sscanf(args, "0x%08x %d", &addr, &len);
-	UINT32 StartPage = (addr-FLASH_BASE)/FLASH_PAGE_SIZE;
-	UINT32 EndPage   = ((addr+len+FLASH_PAGE_SIZE-1)-FLASH_BASE)/FLASH_PAGE_SIZE;
-
-	INT32 error=0;
-	static FLASH_EraseInitTypeDef _erasePar;
-	_erasePar.TypeErase = FLASH_TYPEERASE_PAGES;
-	_erasePar.PageAddress = addr;
-	_erasePar.NbPages     = EndPage-StartPage;
-	HAL_FLASH_Unlock();
-	if (HAL_FLASHEx_Erase(&_erasePar, &error) != HAL_OK)
-	{
-
-		/*Error occurred while page erase.*/
-
-		error = HAL_FLASH_GetError();
-	}
-	HAL_FLASH_Lock();
-	if (error>=0) nuc_printf("ERROR: FLASH_ERASE at 0x%08x\n", error);
-	else		  nuc_printf("FLASH_ERASE 0x%08x %d\n", addr, len);
 }

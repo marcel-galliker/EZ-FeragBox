@@ -2,11 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "ge_common.h"
 #include "box.h"
 #include "enc.h"
-#include "term.h"
-#include "ge_common.h"
 #include "main.h"
+#include "term.h"
 
 #define CMD_FIFO_SIZE 8
 static char _Input[128];
@@ -60,6 +60,7 @@ void term_idle(void)
     	else if ((args=strstart(cmd, "prodLen"))) 	box_set_prodLen(atoi(args));
     	else if ((args=strstart(cmd, "pg"))) 		box_printGo();
     	else if ((args=strstart(cmd, "resetBX")))	box_reset_bx();
+    	else if ((args=strstart(cmd, "BL_VERSION"))) jump_to(0x8000000); // start bootloader
     	else if (strlen(cmd)) nuc_printf("WARN: Unknown command >>%s<<\n", cmd);
     }
 }

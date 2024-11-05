@@ -77,7 +77,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  SCB->VTOR = 0x8000000;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -111,6 +111,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  int _ticks=0;
   while (1)
   {
     /* USER CODE END WHILE */
@@ -362,25 +363,6 @@ void jump_to(UINT32 addr)
 	start = (start_fct)vtab[1];
 	__enable_irq();
 	start();
-	/*
-	void (*app_reset_handler)(void);
-	app_reset_handler = (void*) resethandler_address;
-	//3. jump to reset handler of the user application
-	app_reset_handler();
-
-
-//	asm("msr msp, %0; bx %1;" : : "r"(tab[0]), "r"(tab[1]));
-
-	uint32_t msp_value = *(__IO uint32_t *)addr;
-	__set_MSP(msp_value);
-
-	uint32_t resethandler_address = *(__IO uint32_t *) (addr + 4);
-	void (*app_reset_handler)(void);
-	app_reset_handler = (void*) resethandler_address;
-
-	//3. jump to reset handler of the user application
-	app_reset_handler();
-	*/
 }
 
 //--- nuc_printf --------------------------------------------

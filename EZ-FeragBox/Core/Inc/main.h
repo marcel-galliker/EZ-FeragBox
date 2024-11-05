@@ -31,7 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ge_common.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -62,6 +62,7 @@ void    power_nuc(int on);
 
 void 	nuc_printf (const char *format, ...);
 void	ferag_send_char(char data);
+void 	jump_to(UINT32 addr);
 
 /* USER CODE END EFP */
 
