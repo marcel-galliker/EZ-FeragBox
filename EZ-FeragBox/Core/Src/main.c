@@ -18,11 +18,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <stdarg.h>
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
 #include <math.h>
+#include <stdarg.h>
 #include "enc.h"
 #include "box.h"
 #include "term.h"
@@ -85,10 +86,10 @@ static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_USART1_UART_Init(void);
-static void _jump_to(UINT32 addr);
 /* USER CODE BEGIN PFP */
 
 #define WRITE_PROTOTYPE int _write(int file, char *ptr, int len)
+static void _jump_to(UINT32 addr);
 static void MX_GPIO_DeInit(void);
 
 // void powerCommand(const char* args);
@@ -108,6 +109,7 @@ static void _tick_10ms(int ticks);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   if ((int)main>0x8008000)
@@ -116,7 +118,6 @@ int main(void)
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
-
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
@@ -135,9 +136,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART3_UART_Init();
+  MX_TIM3_Init();
   MX_I2C1_Init();
   MX_TIM2_Init();
-  MX_TIM3_Init();
   MX_TIM5_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
@@ -300,7 +301,7 @@ static void MX_TIM2_Init(void)
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_DOWN;
   htim2.Init.Period = 100000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -516,8 +517,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-//  HAL_GPIO_WritePin(GPIOF, RESET_BX_Pin|DISPLAY_PWR_EN_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(GPIOF, RESET_BX_Pin|DISPLAY_PWR_EN_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(RESET_BX_GPIO_Port, RESET_BX_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(DISPLAY_PWR_EN_GPIO_Port, DISPLAY_PWR_EN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(ENCODER_A_GPIO_Port, ENCODER_A_Pin, GPIO_PIN_SET);
@@ -571,6 +574,8 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
+/* USER CODE BEGIN 4 */
+//--- MX_GPIO_DeInit ----------------------------------
 static void MX_GPIO_DeInit(void)
 {
 	__HAL_RCC_GPIOF_CLK_DISABLE();
@@ -580,7 +585,6 @@ static void MX_GPIO_DeInit(void)
 	HAL_GPIO_DeInit(PRINT_GO_GPIO_Port, PRINT_GO_Pin);
 }
 
-/* USER CODE BEGIN 4 */
 //--- HAL_TIM_PeriodElapsedCallback -------------------------
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {

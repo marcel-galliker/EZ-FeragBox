@@ -25,7 +25,8 @@ static int   _Init=FALSE;
 static int	 _Running=FALSE;
 static int	 _TimerRunning=FALSE;
 static float _EncIn_incPM  = 10240;	// impulese/ m
-static float _EncOut_incPM = 128 * 1000.0 / 25.4; 	// impulese/ m (128 DPI)
+//static float _EncOut_incPM = 128 * 1000.0 / 25.4; 	// impulese/ m (128 DPI)
+static float _EncOut_incPM = 128 * 1000.0 / 25.4;// * 200/150; 	// impulese/ m (128 DPI)
 static INT32 _EncInTime=0;
 int 	 	  EZ_EncoderInPos;
 int 	 	  EZ_EncoderOutPos;
@@ -69,7 +70,7 @@ void enc_in_irq(TIM_HandleTypeDef *htim)
 //--- enc_tick_10ms ---------------------------
 void enc_tick_10ms(int ticks)
 {
-	if (ticks-_EncOutTime>1000)
+	if (ticks-_EncOutTime>100)
 	{
 		float t=(float)(ticks-_EncOutTime);
 		_EncStatus.encOutSpeed = (int32_t) (1000.0*_EncOutSpeedCnt/t/2);
@@ -161,11 +162,14 @@ static void _set_speed(int32_t speed)
 	}
 }
 
+//--- enc_aar ---------------------------------
 int enc_aar(void)
 {
 	return TIM2->ARR;
 }
 
+
+//--- enc_cnt ----------------------------------------
 int enc_cnt(void)
 {
 	return TIM2->CNT;
