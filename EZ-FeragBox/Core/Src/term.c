@@ -60,7 +60,7 @@ void term_idle(void)
     	else if ((args=strstart(cmd, "prodLen"))) 	box_set_prodLen(atoi(args));
     	else if ((args=strstart(cmd, "pg"))) 		box_printGo();
     	else if ((args=strstart(cmd, "resetBX")))	box_reset_bx();
-  //  	else if ((args=strstart(cmd, "BL_VERSION"))) jump_to(0x8000000); // start bootloader
+    	else if ((args=strstart(cmd, "BL_VERSION"))) jump_to(0x8000000); // start bootloader
     	else if (strlen(cmd)) nuc_printf("WARN: Unknown command >>%s<<\n", cmd);
     }
 }

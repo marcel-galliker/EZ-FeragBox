@@ -371,7 +371,7 @@ void jump_to(UINT32 addr)
 //--- nuc_printf --------------------------------------------
 void nuc_printf (const char *format, ...)
 {
-	char buf[256];
+	static char buf[256];
 
 	va_list args;
 	va_start(args, format);

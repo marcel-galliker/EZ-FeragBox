@@ -67,7 +67,7 @@ static void _bl_write(char *args)
 		}
 	}
 	HAL_FLASH_Lock();
-	if (error>=0) nuc_printf("ERROR: BL_WR at 0x%08x\n", error);
+	if (error>=0) nuc_printf("ERROR: BL_WR at 0x%08x\n", addr);
 	else   		  nuc_printf("BL_WR 0x%08x\n", addr, len);
 }
 
@@ -83,14 +83,12 @@ static void _bl_erase(char *args)
 	INT32 error=0;
 	static FLASH_EraseInitTypeDef _erasePar;
 	_erasePar.TypeErase = FLASH_TYPEERASE_PAGES;
-	_erasePar.PageAddress = addr;
+	_erasePar.PageAddress = addr & ~(FLASH_PAGE_SIZE-1);
 	_erasePar.NbPages     = EndPage-StartPage;
+
 	HAL_FLASH_Unlock();
 	if (HAL_FLASHEx_Erase(&_erasePar, (UINT32*)&error) != HAL_OK)
 	{
-
-		/*Error occurred while page erase.*/
-
 		error = HAL_FLASH_GetError();
 	}
 	HAL_FLASH_Lock();
