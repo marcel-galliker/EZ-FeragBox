@@ -26,7 +26,7 @@ static int	 _Running=FALSE;
 static int	 _TimerRunning=FALSE;
 static float _EncIn_incPM  = 10240;	// impulese/ m
 //static float _EncOut_incPM = 128 * 1000.0 / 25.4; 	// impulese/ m (128 DPI)
-static float _EncOut_incPM = 128 * 1000.0 / 25.4;// * 200/150; 	// impulese/ m (128 DPI)
+static float _EncOut_incPM = (4*128) * 1000.0 / 25.4; // impulese/ m (128 DPI)
 static INT32 _EncInTime=0;
 int 	 	  EZ_EncoderInPos;
 int 	 	  EZ_EncoderOutPos;
