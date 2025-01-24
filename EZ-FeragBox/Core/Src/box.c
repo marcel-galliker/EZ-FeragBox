@@ -67,6 +67,8 @@ static int			_PrinterDoneIn=0;
 static int			_AwaitPrintDone;
 static int			_PrintGoPos;
 static int			_PrintDoneDelay;
+static int			_PrintDonePeakFilter;
+static int			_PrintDoneError;
 static int 			_ErrorFlag;
 
 //--- prototypes ------------------
@@ -329,20 +331,25 @@ static void _check_print_done(void)
 	int dist= _EncoderPos-_PrintGoPos;
 
 	if (printDone!=_PrinterDoneIn) nuc_printf("print-done[%d]=%d at %d, dist=%d\n", _Status.pgCnt, printDone, _EncoderPos, dist);
-
+	if (!printDone) _PrintDonePeakFilter=0;
 	if (_PrintDoneDelay)
 	{
 		if (dist<10)
 		{
-			if (!printDone) nuc_printf("WARN: PRINT-DONE high expected\n");
+			if (!printDone)
+			{
+				if (!_PrintDoneError) nuc_printf("ERR: PRINT-DONE high expected\n");
+				_PrintDoneError=TRUE;
+			}
 		}
 		else if (dist>=_ProdLen-100)
 		{
 			_send_print_done();
 		}
-		else if (dist>20)
+		else if (dist>35)
 		{
-			if (printDone) nuc_printf("WARN: PRINT-DONE low expected\n");
+			if (printDone) _PrintDonePeakFilter++;
+			if (_PrintDonePeakFilter==5) nuc_printf("ERR: PRINT-DONE low expected\n");
 		}
 	}
 	_PrinterDoneIn = printDone;
@@ -352,7 +359,8 @@ static void _check_print_done(void)
 static void _send_print_done(void)
 {
 	_PrintDoneDelay=0;
-
+	_PrintDonePeakFilter = 0;
+	_PrintDoneError = 0;
 	if (enc_fixSpeed() || _Tracking[_TrackIdx].prod.info&0x01)
 	{
 		nuc_printf("PD%d: PaceId[%d]=%d\n", _Status.pdCnt+_Status.emptyDoneCnt, _TrackIdx, _Tracking[_TrackIdx].prod.paceId);
@@ -381,6 +389,7 @@ void box_printGo(void)
 		HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_SET);
 		_PrintGoPos 	 = _EncoderPos;
 		_PrintGoOffDelay = 10;
+		_PrintDoneError  = FALSE;
 		_PrintDoneDelay  = _ProdLen;
 		_Status.pgCnt++;
 	}
