@@ -29,7 +29,4 @@ void enc_get_status(SEZFB_EncStatus *pstatus);
 void enc_start(void);
 void enc_stop(void);
 
-int enc_aar(void);
-int enc_cnt(void);
-
 #endif /* INC_ENCODER_ENGINE_H_ */

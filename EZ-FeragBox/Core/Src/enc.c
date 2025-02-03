@@ -70,7 +70,7 @@ void enc_in_irq(TIM_HandleTypeDef *htim)
 //--- enc_tick_10ms ---------------------------
 void enc_tick_10ms(int ticks)
 {
-	if (ticks-_EncOutTime>100)
+	if (ticks-_EncOutTime>20)
 	{
 		float t=(float)(ticks-_EncOutTime);
 		_EncStatus.encOutSpeed = (int32_t) (1000.0*_EncOutSpeedCnt/t/2);
@@ -160,19 +160,6 @@ static void _set_speed(int32_t speed)
 			}
 		}
 	}
-}
-
-//--- enc_aar ---------------------------------
-int enc_aar(void)
-{
-	return TIM2->ARR;
-}
-
-
-//--- enc_cnt ----------------------------------------
-int enc_cnt(void)
-{
-	return TIM2->CNT;
 }
 
 //--- enc_out_irq -------------------------------

@@ -63,6 +63,7 @@ static int 		    _ProdLen=100;
 static int 		    _PrintGoOffDelay=0;
 static int			_EncoderPos;
 static int			_LastPDPos;
+static int			_LastSpeed;
 static int			_PrinterDoneIn=0;
 static int			_AwaitPrintDone;
 static int			_PrintGoPos;
@@ -260,7 +261,7 @@ static void _handle_feragMsg(void)
 						if (EZ_EncoderInPos<100)
 							nuc_printf("ERROR: Encoder input missing!\n");
 						else
-							nuc_printf("ERROR: Tracking overflow encIn=%d, encOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, enc_aar(), enc_cnt());
+							nuc_printf("ERROR: Tracking overflow encIn=%d, encOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed);
 					}
 					_ErrorFlag |= 2;
 				}
@@ -280,10 +281,12 @@ static void _handle_feragMsg(void)
 						corr=110*(5600-_Status.enc.encOutSpeed)/5600;
 					}
 					int dist = _EncoderPos - _LastPDPos;
+					int acc  = _Status.enc.encOutSpeed-_LastSpeed;
+					_LastSpeed = _Status.enc.encOutSpeed;
 					_LastPDPos = _EncoderPos;
 					_Tracking[idx].delay = _PrintGoDelay+corr;
 					nuc_printf("Speed=%d, corr=%d\n", _Status.enc.encOutSpeed, corr);
-					nuc_printf("DT:%03d,%d dist=%d, EncIn=%d, EncOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", _FeragMsg.paceId, _Tracking[idx].prod.info&1, dist, EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, enc_aar(), enc_cnt());
+					nuc_printf("DT:%03d,%d dist=%d, EncIn=%d, EncOut=%d, inSpeed=%d, outSpeed=%d, acc=%d, corr=%d\n", _FeragMsg.paceId, _Tracking[idx].prod.info&1, dist, EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, acc, corr);
 					if (_Status.dtCnt && dist<100) nuc_printf("ERROR: Encoder input missing!\n");
 					_Status.dtCnt++;
 				}
