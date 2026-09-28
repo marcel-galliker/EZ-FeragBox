@@ -16,6 +16,9 @@
 
 #define SIMULATION FALSE
 
+#define Norwix_IM2 3001
+#define Videojet_BX 5000
+
 #pragma pack(1)
 typedef struct SFeragMsg
 {
@@ -56,6 +59,7 @@ static int			_FeragMsgIn, _FeragMsgOut;
 #define TRACKING_CNT	16
 static SProduct		_Tracking[TRACKING_CNT];
 static int			_TrackIdx;
+static int			_HeadType=Videojet_BX;
 static int			_PaceCheck;
 static int			_FeragCheck;
 static int			_PrintGoDelay=500;
@@ -93,7 +97,7 @@ void box_init(void)
 	_PrinterDoneIn   = 0;
 	_PaceCheck		 = -1;
 	_FeragCheck		 = -1;
-	box_start();
+//	box_start(Videojet_BX);
 	nuc_printf("LOG: box_init\n");
 }
 
@@ -112,9 +116,9 @@ void box_set_prodLen(int len)
 }
 
 //--- box_start -------------------------
-void box_start(void)
+void box_start(int headType)
 {
-	nuc_printf("start\n");
+	nuc_printf("start headType=%d\n", headType);
 	memset(_Tracking, 0, sizeof(_Tracking));
 	_FeragMsgIn   	= 0;
 	_FeragMsgOut  	= 0;
@@ -131,6 +135,7 @@ void box_start(void)
 	_ErrorFlag		 = 0;
 	_PrintDoneDelay  = 0;
 	_AwaitPrintDone  = FALSE;
+	_HeadType 		 = headType;
 //	box_send_status();
 	_Running = TRUE;
 	HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
@@ -243,8 +248,12 @@ void box_handle_ferag_char(char data)
 //--- _handle_feragMsg ---------------------
 static void _handle_feragMsg(void)
 {
+	static int _unknownErr = FALSE;
+
+	if (_Ticks%1000==0) _unknownErr = FALSE;
 	if (_FeragMsgOut!=_FeragMsgIn)
 	{
+	//	nuc_printf("FeragMsg type=%d, info=0x%x, paceIn=%d\n", _FeragMsg.type, _FeragMsg.info, _FeragMsg.paceId);
 		switch (_FeragMsg.type)
 		{
 		case 1:	if (!_Running)
@@ -275,17 +284,24 @@ static void _handle_feragMsg(void)
 					memcpy(&_Tracking[idx].prod, &_FeragMsg,  sizeof(_Tracking[idx].prod));
 					//--- speed compensation ----------------
 					int corr=0;
-					if (_Status.enc.encOutSpeed<5600)
+					if (_HeadType==Norwix_IM2)
 					{
-						// between 1'400 HZ and 4'200 Hz: Delay 100 Incs
-						corr=110*(5600-_Status.enc.encOutSpeed)/5600;
+						corr = (int)(70.0*_Status.enc.encOutSpeed/25000.0);
+					}
+					else // Videojet BX
+					{
+						if (_Status.enc.encOutSpeed<5600)
+						{
+							// between 1'400 HZ and 4'200 Hz: Delay 100 Incs
+							corr=110*(5600-_Status.enc.encOutSpeed)/5600;
+						}
 					}
 					int dist = _EncoderPos - _LastPDPos;
 					int acc  = _Status.enc.encOutSpeed-_LastSpeed;
 					_LastSpeed = _Status.enc.encOutSpeed;
 					_LastPDPos = _EncoderPos;
 					_Tracking[idx].delay = _PrintGoDelay+corr;
-					nuc_printf("Speed=%d, corr=%d\n", _Status.enc.encOutSpeed, corr);
+				//	nuc_printf("Speed=%d, corr=%d\n", _Status.enc.encOutSpeed, corr);
 					nuc_printf("DT:%03d,%d dist=%d, EncIn=%d, EncOut=%d, inSpeed=%d, outSpeed=%d, acc=%d, corr=%d\n", _FeragMsg.paceId, _Tracking[idx].prod.info&1, dist, EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, acc, corr);
 					if (_Status.dtCnt && dist<100) nuc_printf("ERROR: Encoder input missing!\n");
 					_Status.dtCnt++;
@@ -293,7 +309,9 @@ static void _handle_feragMsg(void)
 				break;
 
 		case 2:		_Status.aliveCnt++; break;
-		default: 	nuc_printf("Unknown Message Type=%d\n", _FeragMsg.type);
+		default: 	if (!_unknownErr)
+						nuc_printf("Unknown Message Type=%d\n", _FeragMsg.type);
+					_unknownErr = TRUE;
 					break;
 		}
 		_Status.feragMsgOutCnt++;
@@ -330,32 +348,35 @@ void box_handle_encoder(void)
 //--- _check_print_done --------------------------------------------------
 static void _check_print_done(void)
 {
-	int printDone=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
-	int dist= _EncoderPos-_PrintGoPos;
-
-	if (printDone!=_PrinterDoneIn) nuc_printf("print-done[%d]=%d at %d, dist=%d\n", _Status.pgCnt, printDone, _EncoderPos, dist);
-	if (!printDone) _PrintDonePeakFilter=0;
-	if (_PrintDoneDelay)
+	if (_HeadType==Videojet_BX)
 	{
-		if (dist<10)
+		int printDone=HAL_GPIO_ReadPin(PRINT_DONE_GPIO_Port, PRINT_DONE_Pin);
+		int dist= _EncoderPos-_PrintGoPos;
+
+		if (printDone!=_PrinterDoneIn) nuc_printf("print-done[%d]=%d at %d, dist=%d\n", _Status.pgCnt, printDone, _EncoderPos, dist);
+		if (!printDone) _PrintDonePeakFilter=0;
+		if (_PrintDoneDelay)
 		{
-			if (!printDone)
+			if (dist<10)
 			{
-				if (!_PrintDoneError) nuc_printf("ERR: PRINT-DONE high expected\n");
-				_PrintDoneError=TRUE;
+				if (!printDone)
+				{
+					if (!_PrintDoneError) nuc_printf("ERR: PRINT-DONE high expected\n");
+					_PrintDoneError=TRUE;
+				}
+			}
+			else if (dist>=_ProdLen-100)
+			{
+				_send_print_done();
+			}
+			else if (dist>35)
+			{
+				if (printDone) _PrintDonePeakFilter++;
+				if (_PrintDonePeakFilter==5) nuc_printf("ERR: PRINT-DONE low expected\n");
 			}
 		}
-		else if (dist>=_ProdLen-100)
-		{
-			_send_print_done();
-		}
-		else if (dist>35)
-		{
-			if (printDone) _PrintDonePeakFilter++;
-			if (_PrintDonePeakFilter==5) nuc_printf("ERR: PRINT-DONE low expected\n");
-		}
+		_PrinterDoneIn = printDone;
 	}
-	_PrinterDoneIn = printDone;
 }
 
 //--- _send_print_done ----------------------------------------

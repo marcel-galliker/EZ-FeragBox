@@ -54,7 +54,7 @@ void term_idle(void)
     //	printf("TERM: cmd[%d] >>%s<<\n", _CmdOut%CMD_FIFO_SIZE, cmd);
 		_CmdOut++;
     	if      ((args=strstart(cmd, "encoder"))) 	enc_command(args);
-    	else if ((args=strstart(cmd, "start"))) 	box_start();
+    	else if ((args=strstart(cmd, "start")))		box_start(atoi(args));
     	else if ((args=strstart(cmd, "stop"))) 		box_stop();
     	else if ((args=strstart(cmd, "pgDelay"))) 	box_set_pgDelay(atoi(args));
     	else if ((args=strstart(cmd, "prodLen"))) 	box_set_prodLen(atoi(args));

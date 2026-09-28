@@ -17,7 +17,7 @@ void box_handle_encoder(void);
 
 void box_set_pgDelay(int delay);
 void box_set_prodLen(int len);
-void box_start(void);
+void box_start(int headType);
 void box_stop(void);
 
 void box_printGo(void);

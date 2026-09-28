@@ -347,6 +347,7 @@ static void MX_GPIO_Init(void)
 //--- _jump_to -----------------------------------------------
 void jump_to(UINT32 addr)
 {
+	//--- IMPORTANT: DeInit all devices! --------------------------
 	HAL_RCC_DeInit();
 	HAL_UART_DeInit(&huart3);
 	HAL_TIM_Base_DeInit(&htim3);

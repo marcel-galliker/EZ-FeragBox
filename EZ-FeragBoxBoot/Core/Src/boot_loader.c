@@ -77,6 +77,13 @@ static void _bl_erase(char *args)
 	unsigned int addr;
 	unsigned int len;
 	sscanf(args, "0x%08x %d", &addr, &len);
+
+	if (addr<0x8008000)
+	{
+		nuc_printf("ERROR: BL_ERASE at 0x%08x BAD ADDRESS\n", addr);
+		return;
+	}
+
 	UINT32 StartPage = (addr-FLASH_BASE)/FLASH_PAGE_SIZE;
 	UINT32 EndPage   = ((addr+len+FLASH_PAGE_SIZE-1)-FLASH_BASE)/FLASH_PAGE_SIZE;
 
