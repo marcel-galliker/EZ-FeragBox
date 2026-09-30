@@ -258,21 +258,30 @@ static void _handle_feragMsg(void)
 		{
 		case 1:	if (!_Running)
 				{
-					if (!_ErrorFlag&1)
-						nuc_printf("ProductDetect pace=%d, ok=%d while encoder off\n", _FeragMsg.paceId, _FeragMsg.info);
-					_ErrorFlag |= 1;
+					if (_FeragMsg.info)
+					{
+						if (!(_ErrorFlag&1))
+							nuc_printf("ERROR: pace=%d, PRODUCT while encoder off\n", _FeragMsg.paceId, _FeragMsg.info);
+						_ErrorFlag |= 1;
+					}
+					else
+					{
+						if (!(_ErrorFlag&2))
+							nuc_printf("WARN: pace=%d, EMPTY while encoder off\n", _FeragMsg.paceId, _FeragMsg.info);
+						_ErrorFlag |= 2;
+					}
 				}
 				else if (_Status.dtCnt-_Status.pdCnt-_Status.emptyDoneCnt>=TRACKING_CNT)
 				{
-					if (!(_ErrorFlag&2))
+					if (!(_ErrorFlag&4))
 					{
 						nuc_printf("Tracking overflow dtCnt=%d, pdCnt=%d, eChnt=%d\n", _Status.dtCnt, _Status.pdCnt, _Status.emptyDoneCnt);
 						if (EZ_EncoderInPos<100)
-							nuc_printf("ERROR: Encoder input missing!\n");
+							nuc_printf("ERR: Encoder input missing!\n");
 						else
-							nuc_printf("ERROR: Tracking overflow encIn=%d, encOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed);
+							nuc_printf("ERR: Tracking overflow encIn=%d, encOut=%d, inSpeed=%d, outSpeed=%d, period=%d, cnt=%d\n", EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed);
 					}
-					_ErrorFlag |= 2;
+					_ErrorFlag |= 4;
 				}
 				else
 				{
