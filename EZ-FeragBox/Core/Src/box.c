@@ -295,7 +295,8 @@ static void _handle_feragMsg(void)
 					int corr=0;
 					if (_HeadType==Norwix_IM2)
 					{
-						corr = (int)(70.0*_Status.enc.encOutSpeed/25000.0);
+					//	corr = (int)(70.0*_Status.enc.encOutSpeed/25000.0);
+						corr = (int)(20.0*_Status.enc.encOutSpeed/25000.0);
 					}
 					else // Videojet BX
 					{
@@ -311,7 +312,7 @@ static void _handle_feragMsg(void)
 					_LastPDPos = _EncoderPos;
 					_Tracking[idx].delay = _PrintGoDelay+corr;
 				//	nuc_printf("Speed=%d, corr=%d\n", _Status.enc.encOutSpeed, corr);
-					nuc_printf("DT:%03d,%d dist=%d, EncIn=%d, EncOut=%d, inSpeed=%d, outSpeed=%d, acc=%d, corr=%d\n", _FeragMsg.paceId, _Tracking[idx].prod.info&1, dist, EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, acc, corr);
+					nuc_printf("DT:%03d,%d dist=%d, EncIn=%d, EncOut=%d, inSpeed=%d, outSpeed=%d, acc=%d, corr=%d type=%d\n", _FeragMsg.paceId, _Tracking[idx].prod.info&1, dist, EZ_EncoderInPos, EZ_EncoderOutPos, _Status.enc.encInSpeed, _Status.enc.encOutSpeed, acc, corr, _HeadType);
 					if (_Status.dtCnt && dist<100) nuc_printf("ERROR: Encoder input missing!\n");
 					_Status.dtCnt++;
 				}
