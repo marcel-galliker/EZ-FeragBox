@@ -74,6 +74,7 @@ static int			_PrintGoPos;
 static int			_PrintDoneDelay;
 static int			_PrintDonePeakFilter;
 static int			_PrintDoneError;
+static int			_MsgCheckDelay=0;
 static int 			_ErrorFlag;
 
 //--- prototypes ------------------
@@ -133,6 +134,7 @@ void box_start(int headType)
 	_EncoderPos   	 = 0;
 	_LastPDPos		 = 0;
 	_ErrorFlag		 = 0;
+	_MsgCheckDelay   = 0;
 	_PrintDoneDelay  = 0;
 	_AwaitPrintDone  = FALSE;
 	_HeadType 		 = headType;
@@ -161,6 +163,7 @@ void box_stop(void)
 	{
 		nuc_printf("stop\n");
 		_Running = FALSE;
+		_MsgCheckDelay = _Ticks+1000;
 	//	_Status.flags &= ~FLAG_encoder_running;
 	}
 //	HAL_GPIO_WritePin(PRINT_GO_GPIO_Port, PRINT_GO_Pin, GPIO_PIN_RESET);
@@ -258,17 +261,20 @@ static void _handle_feragMsg(void)
 		{
 		case 1:	if (!_Running)
 				{
-					if (_FeragMsg.info)
+					if (_MsgCheckDelay && _Ticks<_MsgCheckDelay)
 					{
-						if (!(_ErrorFlag&1))
-							nuc_printf("ERROR: pace=%d, PRODUCT while encoder off\n", _FeragMsg.paceId, _FeragMsg.info);
-						_ErrorFlag |= 1;
-					}
-					else
-					{
-						if (!(_ErrorFlag&2))
-							nuc_printf("WARN: pace=%d, EMPTY while encoder off\n", _FeragMsg.paceId, _FeragMsg.info);
-						_ErrorFlag |= 2;
+						if (_FeragMsg.info)
+						{
+							if (!(_ErrorFlag&1))
+								nuc_printf("ERROR: pace=%d, PRODUCT while encoder off\n", _FeragMsg.paceId, _FeragMsg.info);
+							_ErrorFlag |= 1;
+						}
+						else
+						{
+							if (!(_ErrorFlag&2))
+								nuc_printf("WARN: pace=%d, EMPTY while encoder off\n", _FeragMsg.paceId, _FeragMsg.info);
+							_ErrorFlag |= 2;
+						}
 					}
 				}
 				else if (_Status.dtCnt-_Status.pdCnt-_Status.emptyDoneCnt>=TRACKING_CNT)
